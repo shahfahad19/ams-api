@@ -1,105 +1,115 @@
+const catchAsync = require('../utils/catchAsync');
 const Batch = require('./../models/batchModel');
+const jwt = require('jsonwebtoken');
+const { promisify } = require('util');
 const APIFeatures = require('./../utils/apiFeatures');
+const AppError = require('../utils/appError');
 
-exports.getAllBatches = async (req, res) => {
-    try {
-        const features = new APIFeatures(Batch.find(), req.query).filter().sort().limit().paginate();
-        const batches = await features.query.populate('adminId');
+const filterObj = (obj, ...allowedFields) => {
+    const newObj = {};
+    Object.keys(obj).forEach((el) => {
+        if (allowedFields.includes(el)) newObj[el] = obj[el];
+    });
+    return newObj;
+};
 
-        let batchArray = [];
+const getAdminID = async (req) => {
+    let adminId = await promisify(jwt.verify)(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET);
+    return adminId.id;
+};
 
-        batches.forEach((batch, i) => {
-            batchArray[i] = {
+exports.getAllBatches = catchAsync(async (req, res) => {
+    let adminId = await getAdminID(req);
+    const features = new APIFeatures(Batch.find(), req.query)
+        .filter()
+        .sort()
+        .limit('id', 'name', 'batchCode')
+        .paginate();
+    const batches = await features.query.populate('adminId');
+
+    let batchArray = [];
+
+    batches.forEach((batch, i) => {
+        if (batch.adminId._id.toString() === adminId)
+            batchArray.push({
                 _id: batch._id,
                 name: batch.name,
                 department: batch.adminId.department,
-            };
-        });
+            });
+    });
 
-        // SEND RESPONSE
-        res.status(200).json({
-            status: 'success',
-            results: batches.length,
-            data: {
-                batches: batchArray,
-            },
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(404).json({
-            status: 'fail',
-            message: err,
-        });
-    }
-};
+    // SEND RESPONSE
+    res.status(200).json({
+        status: 'success',
+        results: batches.length,
+        data: {
+            batches: batchArray,
+        },
+    });
+});
 
-exports.getBatch = async (req, res) => {
-    try {
-        const student = await Batch.findById(req.params.id);
+exports.createBatch = catchAsync(async (req, res) => {
+    const adminId = await promisify(jwt.verify)(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET);
+    const batch = {
+        adminId: adminId.id,
+        name: req.body.name,
+        batchCode: req.body.batchCode,
+        createdAt: Date.now(),
+    };
+    const newBatch = await Batch.create(batch);
+    res.status(201).json({
+        status: 'success',
+        data: {
+            Batch: newBatch,
+        },
+    });
+});
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                student,
-            },
-        });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err,
-        });
-    }
-};
+exports.getBatch = catchAsync(async (req, res, next) => {
+    const batch = await Batch.findById(req.params.id);
+    const adminId = await getAdminID(req);
 
-exports.createBatch = async (req, res) => {
-    try {
-        const newBatch = await Batch.create(req.body);
-        res.status(201).json({
-            status: 'success',
-            data: {
-                Batch: newBatch,
-            },
-        });
-    } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err,
-        });
-    }
-};
+    // If this batch doesn't belong to the admin, return error
+    if (batch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
+    res.status(200).json({
+        status: 'success',
+        data: {
+            batch,
+        },
+    });
+});
 
-exports.updateBatch = async (req, res) => {
-    try {
-        const student = await Batch.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
+exports.updateBatch = catchAsync(async (req, res, next) => {
+    const getbatch = await Batch.findById(req.params.id);
+    const adminId = await getAdminID(req);
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                student,
-            },
-        });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err,
-        });
-    }
-};
+    // If this batch doesn't belong to the admin, return error
+    if (getbatch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
 
-exports.deleteBatch = async (req, res) => {
-    try {
-        await Batch.findByIdAndDelete(req.params.id);
+    const filteredObj = filterObj(req.body, 'name', 'batchCode');
+    const batch = await Batch.findByIdAndUpdate(req.params.id, filteredObj, {
+        new: true,
+    }).select('-adminId');
 
-        res.status(204).json({
-            status: 'success',
-            data: null,
-        });
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err,
-        });
-    }
-};
+    res.status(200).json({
+        status: 'success',
+        data: {
+            batch,
+        },
+    });
+});
+
+exports.deleteBatch = catchAsync(async (req, res, next) => {
+    const getbatch = await Batch.findById(req.params.id);
+    const adminId = await getAdminID(req);
+
+    // If this batch doesn't belong to the admin, return error
+    if (getbatch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
+
+    await Batch.findByIdAndDelete(req.params.id);
+
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    });
+});

@@ -7,6 +7,8 @@ router.route('/').get(attendanceController.getAllAttendances).post(attendanceCon
 
 router.route('/student-attendance/:studentid').get(attendanceController.getStudentAttendance);
 
+router.route('/subject-attendance/:subject').get(attendanceController.getSubjectAttendance);
+
 router
     .route('/:id')
     .get(attendanceController.getAttendance)

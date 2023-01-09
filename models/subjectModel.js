@@ -7,15 +7,19 @@ const subjectSchema = new mongoose.Schema({
         required: [true, 'A subject must have an semester id.'],
     },
 
+    name: {
+        type: String,
+        required: [true, 'Subject name is missing'],
+        unique: true,
+    },
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
         required: [true, 'A subject must have an teacher id.'],
     },
-    name: {
-        type: String,
-        required: [true, 'Subject name is missing'],
-        unique: true,
+    createdAt: {
+        type: Date,
+        select: false,
     },
 });
 

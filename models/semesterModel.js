@@ -12,6 +12,10 @@ const semesterSchema = new mongoose.Schema({
         required: [true, 'Semester name is missing'],
         unique: true,
     },
+    createdAt: {
+        type: Date,
+        select: false,
+    },
 });
 
 const Semester = mongoose.model('Semester', semesterSchema);
