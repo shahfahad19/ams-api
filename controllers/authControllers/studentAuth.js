@@ -46,7 +46,7 @@ exports.signup = catchAsync(async (req, res, next) => {
         createdAt: Date.now(),
     });
     const confirmationToken = student.createConfirmationToken();
-    let link = process.env.HOME_URL + confirmationToken;
+    let link = process.env.HOME_URL + '/student/confirmAccount/' + confirmationToken;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
     let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;

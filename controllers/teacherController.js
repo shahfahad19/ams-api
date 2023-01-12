@@ -41,7 +41,7 @@ exports.getConfirmationToken = catchAsync(async (req, res, next) => {
     const teacher = await Teacher.findById(req.teacher._id);
     if (teacher.confirmed === true) return next(new AppError('Account already confirmed', 409));
     const token = teacher.createConfirmationToken();
-    let link = process.env.HOME_URL + token;
+    let link = process.env.HOME_URL + '/admin/confirmAccount/' + token;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
     let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
