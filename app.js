@@ -10,7 +10,7 @@ const teacherRouter = require('./routes/teacherRoutes');
 
 app.use(express.json());
 app.get('/', (req, res) => {
-    res.end('Hi');
+    res.end('AMS API is running');
 });
 
 app.use('/admin', adminRouter);
