@@ -2,8 +2,6 @@ const express = require('express');
 const batchController = require('./../controllers/batchController');
 const adminController = require('./../controllers/adminController');
 const semesterController = require('./../controllers/semesterController');
-const studentController = require('./../controllers/studentController');
-const teacherController = require('./../controllers/teacherController');
 const subjectController = require('./../controllers/subjectController');
 const attendanceController = require('./../controllers/attendanceController');
 const adminAuth = require('./../controllers/authControllers/adminAuth');
@@ -21,16 +19,13 @@ CRUD Semester                    /semester/:id               createSemester, get
 Subjects in semester             /subjects/?semId=?          getSubjects
 
 -------------FUNCTIONS IN attendanceController
-All Attendances of A Subject     /attendances?subjectId=?    getSubejctAttendances
-View attendance of a Date        /attendance?attId=?         getAttendance
-Attendance of a Student          /attendance?studentId=?     getAttendanceOfStudent
-Attendance of a Subject          /attendance?subjectId=?     getAttendanceOfSubject
+View attendance of a Date        /attendance/:id             getAttendance
 Delete Attendance                /attenance/:id              deleteAttendance
+All Attendances of A Subject     /attendances/subject/:id    getSubjectAttendances
+Attendance of a Student          /attendance/student/:id     getAttendanceOfStudent
 
 -------------FUCTIONS IN studentController
 Student List in Batch           /students?batchId=?          getStudentsInBatch
-
-
 */
 
 const router = express.Router();
@@ -47,12 +42,11 @@ router.get(
     adminAuth.protect,
     adminController.getConfirmationToken
 );
-router.get('/confirmAccount/:token', adminAuth.confrimAccount);
+router.get('/confirmAccount/:token', adminController.confirmAccount);
 
-// router.patch('/updateMyPassword', adminAuth.protect, adminAuth.updatePassword);
+router.patch('/updatePassword', adminAuth.protect, adminAuth.updatePassword);
 
-// router.patch('/updateMe', adminAuth.protect, adminController.updateMe);
-// router.delete('/deleteMe', adminAuth.protect, adminController.deleteMe);
+router.patch('/updateProfile', adminAuth.protect, adminController.updateMe);
 
 // Getting list of batches and creating a batch
 router
@@ -88,5 +82,24 @@ router
     .get(adminAuth.protect, adminAuth.checkSubjectPermission, subjectController.getSubject)
     .patch(adminAuth.protect, adminAuth.checkSubjectPermission, subjectController.updateSubject)
     .delete(adminAuth.protect, adminAuth.checkSubjectPermission, subjectController.deleteSubject);
+
+router
+    .route('/attendance/:id')
+    .get(adminAuth.protect, adminAuth.checkAttendancePermission, attendanceController.getAttendance)
+    .delete(adminAuth.protect, adminAuth.checkAttendancePermission, attendanceController.deleteAttendance);
+
+router.get(
+    '/attendance/subject/:id',
+    adminAuth.protect,
+    adminAuth.checkSubjectPermission,
+    attendanceController.getSubjectAttendance
+);
+
+router.get(
+    '/attendance/student/:id',
+    adminAuth.protect,
+    adminAuth.checkStudentPermission,
+    attendanceController.getStudentAttendance
+);
 
 module.exports = router;

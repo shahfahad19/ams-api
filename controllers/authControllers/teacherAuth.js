@@ -5,9 +5,15 @@ const Teacher = require('./../../models/teacherModel');
 const catchAsync = require('./../../utils/catchAsync');
 const AppError = require('./../../utils/appError');
 const sendEmail = require('./../../utils/email');
+const Batch = require('../../models/batchModel');
+const Semester = require('../../models/semesterModel');
+const Subject = require('../../models/subjectModel');
+const Student = require('../../models/studentModel');
+const Attendance = require('../../models/attendanceModel');
+const shortLink = require('../../utils/link');
 
 const signToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+    return jwt.sign({ id, role: 'teacher' }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
     });
 };
@@ -24,6 +30,7 @@ const createSendToken = (teacher, statusCode, res) => {
 
     // Remove password from output
     teacher.password = undefined;
+    teacher.confirmationToken = undefined;
 
     res.status(statusCode).json({
         status: 'success',
@@ -35,14 +42,29 @@ const createSendToken = (teacher, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-    const newTeacher = await Teacher.create({
+    const teacher = await Teacher.create({
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
+        createdAt: Date.now(),
     });
-
-    createSendToken(newTeacher, 201, res);
+    const confirmationToken = teacher.createConfirmationToken();
+    let link = process.env.HOME_URL + confirmationToken;
+    const shortenLink = await shortLink(link);
+    if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
+    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+    try {
+        await sendEmail({
+            email: teacher.email,
+            subject: 'Confirm your account',
+            message,
+        });
+    } catch (err) {
+        console.log(err);
+    }
+    await teacher.save({ validateBeforeSave: false });
+    createSendToken(teacher, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -88,8 +110,24 @@ exports.protect = catchAsync(async (req, res, next) => {
         return next(new AppError('Teacher recently changed password! Please log in again.', 401));
     }
 
+    const ignoreConfirmation = req.body.ignoreConfirmation || false;
+    if (currentTeacher.confirmed === false && ignoreConfirmation) {
+        return next(new AppError('You need to confirm your account before performing this action', 401));
+    }
+
     // GRANT ACCESS TO PROTECTED ROUTE
     req.teacher = currentTeacher;
+    next();
+});
+
+exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
+    req.ignoreConfirmation = true;
+    next();
+});
+
+exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
+    const subject = await Subject.findById(req.params.id);
+    if (!subject.teacherId.equals(req.teacher._id)) return next(new AppError('Subject Not Found', 404));
     next();
 });
 

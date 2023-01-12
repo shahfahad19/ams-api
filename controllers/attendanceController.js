@@ -3,238 +3,7 @@ const mongoose = require('mongoose');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
-exports.getAllAttendances = catchAsync(async (req, res) => {
-    //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-    const subjectId = mongoose.Types.ObjectId('63ac1c21f1000278723b489a');
-    const attendances = await Attendance.aggregate([
-        {
-            $lookup: {
-                from: 'subjects',
-                localField: 'subjectId',
-                foreignField: '_id',
-                as: 'subject',
-            },
-        },
-        {
-            $unwind: '$subject',
-        },
-        {
-            $match: {
-                'subject._id': subjectId,
-            },
-        },
-        {
-            $project: {
-                _id: '$_id',
-                date: '$date',
-                subject: '$subject',
-                students: '$students',
-                attendances: '$attendances',
-            },
-        },
-        {
-            $sort: {
-                date: 1,
-            },
-        },
-        // {
-        //     $unwind: '$attendances.studentId',
-        // },
-    ]);
-
-    // let refactoredAttendanceArray = [];
-    // attendances.forEach((attendance, index) => {
-    //     let sepAtt = [];
-    //     attendance.attendances.forEach((sepatt, index) => {
-    //         sepAtt[index] = {
-    //             studentId: sepatt.studentId._id,
-    //             rollNo: sepatt.studentId.rollNo,
-    //             name: sepatt.studentId.name,
-    //             status: sepatt.status,
-    //         };
-    //     });
-    //     refactoredAttendanceArray[index] = {
-    //         _id: attendance._id,
-    //         date: attendance.date,
-    //         subjectId: attendance.subjectId,
-    //         attendance: sepAtt,
-    //     };
-    // });
-    // SEND RESPONSE
-    res.status(200).json({
-        status: 'success',
-        results: attendances.length,
-        data: {
-            attendances,
-        },
-    });
-});
-
-exports.getSubjectAttendance = catchAsync(async (req, res) => {
-    //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-    const subjectId = mongoose.Types.ObjectId(req.params.subject);
-    const attendances = await Attendance.aggregate([
-        {
-            $match: {
-                subjectId: subjectId,
-            },
-        },
-        {
-            $sort: {
-                date: 1,
-            },
-        },
-        {
-            $unwind: '$attendances',
-        },
-        {
-            $lookup: {
-                from: 'students',
-                localField: 'attendances.studentId',
-                foreignField: '_id',
-                as: 'student',
-            },
-        },
-        {
-            $group: {
-                _id: '$student._id',
-                name: { $first: '$student.name' },
-                rollNo: { $first: '$student.rollNo' },
-                dates: { $push: '$date' },
-                attendance: { $push: '$attendances' },
-            },
-        },
-        {
-            $unwind: '$_id',
-        },
-        {
-            $unwind: '$name',
-        },
-        {
-            $unwind: '$rollNo',
-        },
-        {
-            $sort: {
-                rollNo: 1,
-            },
-        },
-        {
-            $unset: 'attendance.studentId',
-        },
-        {
-            $unset: 'attendance._id',
-        },
-        {
-            $project: {
-                rollNo: '$rollNo',
-                name: '$name',
-                dates: '$dates',
-                percentage: {
-                    $concat: [
-                        {
-                            $convert: {
-                                input: {
-                                    $multiply: [
-                                        {
-                                            $divide: [
-                                                {
-                                                    $size: {
-                                                        $filter: {
-                                                            input: '$attendance',
-                                                            cond: {
-                                                                $eq: ['$$this.status', 'present'],
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    $size: '$attendance',
-                                                },
-                                            ],
-                                        },
-                                        100,
-                                    ],
-                                },
-                                to: 'string',
-                            },
-                        },
-                        '%',
-                    ],
-                },
-                attendance: '$attendance',
-            },
-        },
-    ]);
-
-    // let refactoredAttendanceArray = [];
-    // attendances.forEach((attendance, index) => {
-    //     let sepAtt = [];
-    //     attendance.attendances.forEach((sepatt, index) => {
-    //         sepAtt[index] = {
-    //             studentId: sepatt.studentId._id,
-    //             rollNo: sepatt.studentId.rollNo,
-    //             name: sepatt.studentId.name,
-    //             status: sepatt.status,
-    //         };
-    //     });
-    //     refactoredAttendanceArray[index] = {
-    //         _id: attendance._id,
-    //         date: attendance.date,
-    //         subjectId: attendance.subjectId,
-    //         attendance: sepAtt,
-    //     };
-    // });
-    // SEND RESPONSE
-    res.status(200).json({
-        status: 'success',
-        results: attendances.length,
-        data: {
-            attendances,
-        },
-    });
-});
-
-/*
-exports.getAllAttendances = catchAsync(async (req, res) => {
-        const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-        const attendances = await features.query.populate({
-            path: 'attendances',
-            populate: {
-                path: 'studentId',
-            },
-        });
-
-        let refactoredAttendanceArray = [];
-        attendances.forEach((attendance, index) => {
-            let sepAtt = [];
-            attendance.attendances.forEach((sepatt, index) => {
-                sepAtt[index] = {
-                    studentId: sepatt.studentId._id,
-                    rollNo: sepatt.studentId.rollNo,
-                    name: sepatt.studentId.name,
-                    status: sepatt.status,
-                };
-            });
-            refactoredAttendanceArray[index] = {
-                _id: attendance._id,
-                date: attendance.date,
-                subjectId: attendance.subjectId,
-                attendance: sepAtt,
-            };
-        });
-
-        // SEND RESPONSE
-        res.status(200).json({
-            status: 'success',
-            results: attendances.length,
-            data: {
-                attendances: refactoredAttendanceArray,
-            },
-        });
-   });
-
-*/
-
+// Get Attendance of a date
 exports.getAttendance = catchAsync(async (req, res) => {
     const attendance = await Attendance.findById(req.params.id)
         .populate({
@@ -283,52 +52,7 @@ exports.getAttendance = catchAsync(async (req, res) => {
     });
 });
 
-exports.createAttendance = catchAsync(async (req, res) => {
-    const newAttendance = await Attendance.create(req.body)
-        .populate({
-            path: 'subjectId',
-            populate: {
-                path: 'teacherId',
-            },
-        })
-        .populate({
-            path: 'subjectId',
-            populate: {
-                path: 'semesterId',
-            },
-        });
-    res.status(201).json({
-        status: 'success',
-        data: {
-            Attendance: newAttendance,
-        },
-    });
-});
-
-exports.updateAttendance = catchAsync(async (req, res) => {
-    const student = await Attendance.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-    })
-        .populate({
-            path: 'subjectId',
-            populate: {
-                path: 'teacherId',
-            },
-        })
-        .populate({
-            path: 'subjectId',
-            populate: {
-                path: 'semesterId',
-            },
-        });
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            student,
-        },
-    });
-});
+// Delete attendance
 
 exports.deleteAttendance = catchAsync(async (req, res) => {
     await Attendance.findByIdAndDelete(req.params.id);
@@ -339,10 +63,181 @@ exports.deleteAttendance = catchAsync(async (req, res) => {
     });
 });
 
-exports.getStudentAttendance = catchAsync(async (req, res) => {
-    const student = mongoose.Types.ObjectId(req.params.studentid);
+// Get Attendance of a subject
 
-    const semesterId = mongoose.Types.ObjectId('63ac1a87f1000278723b487d');
+exports.getSubjectAttendance = catchAsync(async (req, res) => {
+    //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
+    const subjectId = mongoose.Types.ObjectId('63ac1c21f1000278723b489a');
+    const attendances = await Attendance.aggregate([
+        {
+            $lookup: {
+                from: 'subjects',
+                localField: 'subjectId',
+                foreignField: '_id',
+                as: 'subject',
+            },
+        },
+        {
+            $unwind: '$subject',
+        },
+        {
+            $match: {
+                'subject._id': subjectId,
+            },
+        },
+        {
+            $project: {
+                _id: '$_id',
+                date: '$date',
+                subject: '$subject',
+                students: '$students',
+                attendances: '$attendances',
+            },
+        },
+        {
+            $sort: {
+                date: 1,
+            },
+        },
+    ]);
+    res.status(200).json({
+        status: 'success',
+        results: attendances.length,
+        data: {
+            attendances,
+        },
+    });
+});
+
+// exports.getSubjectAttendance = catchAsync(async (req, res) => {
+//     //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
+//     const subjectId = mongoose.Types.ObjectId(req.params.subject);
+//     const attendances = await Attendance.aggregate([
+//         {
+//             $match: {
+//                 subjectId: subjectId,
+//             },
+//         },
+//         {
+//             $sort: {
+//                 date: 1,
+//             },
+//         },
+//         {
+//             $unwind: '$attendances',
+//         },
+//         {
+//             $lookup: {
+//                 from: 'students',
+//                 localField: 'attendances.studentId',
+//                 foreignField: '_id',
+//                 as: 'student',
+//             },
+//         },
+//         {
+//             $group: {
+//                 _id: '$student._id',
+//                 name: { $first: '$student.name' },
+//                 rollNo: { $first: '$student.rollNo' },
+//                 dates: { $push: '$date' },
+//                 attendance: { $push: '$attendances' },
+//             },
+//         },
+//         {
+//             $unwind: '$_id',
+//         },
+//         {
+//             $unwind: '$name',
+//         },
+//         {
+//             $unwind: '$rollNo',
+//         },
+//         {
+//             $sort: {
+//                 rollNo: 1,
+//             },
+//         },
+//         {
+//             $unset: 'attendance.studentId',
+//         },
+//         {
+//             $unset: 'attendance._id',
+//         },
+//         {
+//             $project: {
+//                 rollNo: '$rollNo',
+//                 name: '$name',
+//                 dates: '$dates',
+//                 percentage: {
+//                     $concat: [
+//                         {
+//                             $convert: {
+//                                 input: {
+//                                     $multiply: [
+//                                         {
+//                                             $divide: [
+//                                                 {
+//                                                     $size: {
+//                                                         $filter: {
+//                                                             input: '$attendance',
+//                                                             cond: {
+//                                                                 $eq: ['$$this.status', 'present'],
+//                                                             },
+//                                                         },
+//                                                     },
+//                                                 },
+//                                                 {
+//                                                     $size: '$attendance',
+//                                                 },
+//                                             ],
+//                                         },
+//                                         100,
+//                                     ],
+//                                 },
+//                                 to: 'string',
+//                             },
+//                         },
+//                         '%',
+//                     ],
+//                 },
+//                 attendance: '$attendance',
+//             },
+//         },
+//     ]);
+
+//     // let refactoredAttendanceArray = [];
+//     // attendances.forEach((attendance, index) => {
+//     //     let sepAtt = [];
+//     //     attendance.attendances.forEach((sepatt, index) => {
+//     //         sepAtt[index] = {
+//     //             studentId: sepatt.studentId._id,
+//     //             rollNo: sepatt.studentId.rollNo,
+//     //             name: sepatt.studentId.name,
+//     //             status: sepatt.status,
+//     //         };
+//     //     });
+//     //     refactoredAttendanceArray[index] = {
+//     //         _id: attendance._id,
+//     //         date: attendance.date,
+//     //         subjectId: attendance.subjectId,
+//     //         attendance: sepAtt,
+//     //     };
+//     // });
+//     // SEND RESPONSE
+//     res.status(200).json({
+//         status: 'success',
+//         results: attendances.length,
+//         data: {
+//             attendances,
+//         },
+//     });
+// });
+
+// Get Student Attendance
+
+exports.getStudentAttendance = catchAsync(async (req, res) => {
+    const student = mongoose.Types.ObjectId(req.params.studentid) || mongoose.Types.ObjectId(req.student._id);
+
     const stdatt = await Attendance.aggregate([
         {
             $match: {
@@ -508,5 +403,28 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         status: 'success',
         results: stdatt.length,
         attendances: stdatt,
+    });
+});
+
+// create attendance
+exports.createAttendance = catchAsync(async (req, res) => {
+    const newAttendance = await Attendance.create(req.body)
+        .populate({
+            path: 'subjectId',
+            populate: {
+                path: 'teacherId',
+            },
+        })
+        .populate({
+            path: 'subjectId',
+            populate: {
+                path: 'semesterId',
+            },
+        });
+    res.status(201).json({
+        status: 'success',
+        data: {
+            Attendance: newAttendance,
+        },
     });
 });

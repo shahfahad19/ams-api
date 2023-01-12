@@ -5,42 +5,31 @@ const APIFeatures = require('./../utils/apiFeatures');
 exports.getAllSubjects = catchAsync(async (req, res) => {
     const features = new APIFeatures(Subject.find(), req.query).filter().sort().limit().paginate();
 
-    const subjects = await features.query
-        .populate('teacherId')
-        .populate({
-            path: 'semesterId',
-            populate: {
-                path: 'batchId',
-                populate: {
-                    path: 'adminId',
-                },
-            },
-        })
-        .select('-__v');
+    const subjects = await features.query;
 
     let subjectsArray = [];
 
-    subjects.forEach((subject, i) => {
-        if (subject.semesterId.batchId.adminId.equals(req.admin._id))
-            subjectsArray.push({
-                _id: subject._id,
-                name: subject.name,
-                teacherId: subject.teacherId._id,
-                teacherName: subject.teacherId.name,
-                semesterId: subject.semesterId._id,
-                semesterName: subject.semesterId.name,
-                batchId: subject.semesterId.batchId._id,
-                batchName: subject.semesterId.batchId.name,
-                department: subject.semesterId.batchId.adminId.department,
-            });
-    });
+    // subjects.forEach((subject, i) => {
+    //     //if (subject.semesterId.batchId.adminId.equals(req.admin._id))
+    //     subjectsArray.push({
+    //         _id: subject._id,
+    //         name: subject.name,
+    //         teacherId: subject.teacherId._id,
+    //         teacherName: subject.teacherId.name,
+    //         semesterId: subject.semesterId._id,
+    //         semesterName: subject.semesterId.name,
+    //         batchId: subject.semesterId.batchId._id,
+    //         batchName: subject.semesterId.batchId.name,
+    //         department: subject.semesterId.batchId.adminId.department,
+    //     });
+    // });
 
     // SEND RESPONSE
     res.status(200).json({
         status: 'success',
         results: subjects.length,
         data: {
-            subjects: subjectsArray,
+            subjects: subjects,
         },
     });
 });

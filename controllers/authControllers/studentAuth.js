@@ -5,9 +5,10 @@ const Student = require('./../../models/studentModel');
 const catchAsync = require('./../../utils/catchAsync');
 const AppError = require('./../../utils/appError');
 const sendEmail = require('./../../utils/email');
+const shortLink = require('../../utils/link');
 
 const signToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+    return jwt.sign({ id, role: 'student' }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
     });
 };
@@ -24,6 +25,7 @@ const createSendToken = (student, statusCode, res) => {
 
     // Remove password from output
     student.password = undefined;
+    student.confirmationToken = undefined;
 
     res.status(statusCode).json({
         status: 'success',
@@ -35,14 +37,28 @@ const createSendToken = (student, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-    const newStudent = await Student.create({
+    const student = await Student.create({
         name: req.body.name,
+        rollNo: req.body.rollNo,
         email: req.body.email,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
+        createdAt: Date.now(),
     });
-
-    createSendToken(newStudent, 201, res);
+    const confirmationToken = student.createConfirmationToken();
+    let link = process.env.HOME_URL + confirmationToken;
+    const shortenLink = await shortLink(link);
+    if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
+    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+    try {
+        await sendEmail({
+            email: student.email,
+            subject: 'Confirm your account',
+            message,
+        });
+    } catch (err) {}
+    await student.save({ validateBeforeSave: false });
+    createSendToken(student, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -88,8 +104,18 @@ exports.protect = catchAsync(async (req, res, next) => {
         return next(new AppError('Student recently changed password! Please log in again.', 401));
     }
 
+    const ignoreConfirmation = req.body.ignoreConfirmation || false;
+    if (currentStudent.confirmed === false && ignoreConfirmation) {
+        return next(new AppError('You need to confirm your account before performing this action', 401));
+    }
+
     // GRANT ACCESS TO PROTECTED ROUTE
     req.student = currentStudent;
+    next();
+});
+
+exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
+    req.ignoreConfirmation = true;
     next();
 });
 

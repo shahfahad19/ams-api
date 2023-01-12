@@ -9,11 +9,8 @@ const studentSchema = new mongoose.Schema({
         required: [true, 'Please tell us your name!'],
     },
     rollNo: {
-        type: String,
-        required: [true, 'Please provide your email'],
-        unique: true,
-        lowercase: true,
-        validate: [validator.isEmail, 'Please provide a valid email'],
+        type: Number,
+        required: true,
     },
     email: {
         type: String,
@@ -23,10 +20,6 @@ const studentSchema = new mongoose.Schema({
         validate: [validator.isEmail, 'Please provide a valid email'],
     },
     photo: String,
-    batchId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: [true, 'Please provide a Batch ID'],
-    },
     password: {
         type: String,
         required: [true, 'Please provide a password'],
@@ -47,10 +40,12 @@ const studentSchema = new mongoose.Schema({
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
-    activationToken: String,
-    active: {
+    confirmed: {
         type: Boolean,
         default: false,
+    },
+    confirmationToken: {
+        type: String,
         select: false,
     },
     createdAt: {
@@ -68,6 +63,15 @@ studentSchema.pre('save', async function (next) {
 
     // Delete passwordConfirm field
     this.passwordConfirm = undefined;
+    next();
+});
+
+studentSchema.pre('save', async function (next) {
+    // Only run this function if password was actually modified
+    if (!this.isModified('email')) return next();
+
+    // Delete passwordConfirm field
+    this.confirmed = false;
     next();
 });
 
@@ -101,6 +105,14 @@ studentSchema.methods.createPasswordResetToken = function () {
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
     return resetToken;
+};
+
+studentSchema.methods.createConfirmationToken = function () {
+    const confirmationToken = crypto.randomBytes(32).toString('hex');
+
+    this.confirmationToken = crypto.createHash('sha256').update(confirmationToken).digest('hex');
+
+    return confirmationToken;
 };
 
 const Student = mongoose.model('Student', studentSchema);

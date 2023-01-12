@@ -66,6 +66,15 @@ adminSchema.pre('save', async function (next) {
     next();
 });
 
+adminSchema.pre('save', async function (next) {
+    // Only run this function if password was actually modified
+    if (!this.isModified('email')) return next();
+
+    // Delete passwordConfirm field
+    this.confirmed = false;
+    next();
+});
+
 adminSchema.pre('save', function (next) {
     if (!this.isModified('password') || this.isNew) return next();
 

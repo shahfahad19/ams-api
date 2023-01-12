@@ -13,31 +13,24 @@ const filterObj = (obj, ...allowedFields) => {
 
 exports.getAllBatches = catchAsync(async (req, res) => {
     let adminId = req.admin._id;
-    const features = new APIFeatures(Batch.find(), req.query)
+    const features = new APIFeatures(
+        Batch.find({
+            adminId,
+        }).select('-adminId'),
+        req.query
+    )
         .filter()
         .sort()
         .limit('id', 'name', 'batchCode')
         .paginate();
-    const batches = await features.query.populate('adminId');
-
-    let batchArray = [];
-
-    // if (batch.adminId._id === adminId)
-    batches.forEach((batch, i) => {
-        if (batch.adminId._id.equals(adminId))
-            batchArray.push({
-                _id: batch._id,
-                name: batch.name,
-                department: batch.adminId.department,
-            });
-    });
+    const batches = await features.query;
 
     // SEND RESPONSE
     res.status(200).json({
         status: 'success',
         results: batches.length,
         data: {
-            batches: batchArray,
+            batches: batches,
         },
     });
 });

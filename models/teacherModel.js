@@ -16,6 +16,7 @@ const teacherSchema = new mongoose.Schema({
         validate: [validator.isEmail, 'Please provide a valid email'],
     },
     photo: String,
+
     password: {
         type: String,
         required: [true, 'Please provide a password'],
@@ -36,10 +37,12 @@ const teacherSchema = new mongoose.Schema({
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
-    activationToken: String,
-    active: {
+    confirmed: {
         type: Boolean,
         default: false,
+    },
+    confirmationToken: {
+        type: String,
         select: false,
     },
     createdAt: {
@@ -57,6 +60,15 @@ teacherSchema.pre('save', async function (next) {
 
     // Delete passwordConfirm field
     this.passwordConfirm = undefined;
+    next();
+});
+
+teacherSchema.pre('save', async function (next) {
+    // Only run this function if password was actually modified
+    if (!this.isModified('email')) return next();
+
+    // Delete passwordConfirm field
+    this.confirmed = false;
     next();
 });
 
@@ -90,6 +102,14 @@ teacherSchema.methods.createPasswordResetToken = function () {
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
     return resetToken;
+};
+
+teacherSchema.methods.createConfirmationToken = function () {
+    const confirmationToken = crypto.randomBytes(32).toString('hex');
+
+    this.confirmationToken = crypto.createHash('sha256').update(confirmationToken).digest('hex');
+
+    return confirmationToken;
 };
 
 const Teacher = mongoose.model('Teacher', teacherSchema);

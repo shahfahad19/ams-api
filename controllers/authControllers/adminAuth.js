@@ -8,6 +8,9 @@ const sendEmail = require('./../../utils/email');
 const Batch = require('../../models/batchModel');
 const Semester = require('../../models/semesterModel');
 const Subject = require('../../models/subjectModel');
+const Student = require('../../models/studentModel');
+const Attendance = require('../../models/attendanceModel');
+const shortLink = require('../../utils/link');
 
 const signToken = (id) => {
     return jwt.sign({ id, role: 'admin' }, process.env.JWT_SECRET, {
@@ -27,6 +30,7 @@ const createSendToken = (admin, statusCode, res) => {
 
     // Remove password from output
     admin.password = undefined;
+    admin.confirmationToken = undefined;
 
     res.status(statusCode).json({
         status: 'success',
@@ -47,8 +51,18 @@ exports.signup = catchAsync(async (req, res, next) => {
         createdAt: Date.now(),
     });
     const confirmationToken = admin.createConfirmationToken();
+    let link = process.env.HOME_URL + confirmationToken;
+    const shortenLink = await shortLink(link);
+    if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
+    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+    try {
+        await sendEmail({
+            email: admin.email,
+            subject: 'Confirm your account',
+            message,
+        });
+    } catch (err) {}
     await admin.save({ validateBeforeSave: false });
-    console.log(confirmationToken);
     createSendToken(admin, 201, res);
 });
 
@@ -68,28 +82,6 @@ exports.login = catchAsync(async (req, res, next) => {
 
     // 3) If everything ok, send token to client
     createSendToken(admin, 200, res);
-});
-
-exports.confrimAccount = catchAsync(async (req, res, next) => {
-    // 1) Get admin based on the token
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-    console.log(hashedToken);
-    const admin = await Admin.findOne({
-        confirmationToken: hashedToken,
-    });
-
-    // 2) If token has not expired, confirm account
-    if (!admin) {
-        return next(new AppError('Token is invalid or account is already confirmed', 400));
-    }
-
-    admin.confirmationToken = undefined;
-    admin.confirmed = true;
-    await admin.save({ validateBeforeSave: false });
-    res.status(200).json({
-        status: 'success',
-        message: 'Account has been confirmed!',
-    });
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -151,8 +143,31 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
             path: 'batchId',
         },
     });
-    console.log(req.admin._id);
     if (!subject.semesterId.batchId.adminId.equals(req.admin._id)) return next(new AppError('Subject Not Found', 404));
+    next();
+});
+
+exports.checkStudentPermission = catchAsync(async (req, res, next) => {
+    const student = await Student.findById(req.params.id).populate({
+        path: 'batchId',
+    });
+    if (!student.batchId.adminId.equals(req.admin._id)) return next(new AppError('Student Not Found', 404));
+    next();
+});
+
+exports.checkAttendancePermission = catchAsync(async (req, res, next) => {
+    const attenance = await Attendance.findById(req.params.id).populate({
+        path: 'subjectId',
+        populate: {
+            path: 'semesterId',
+            populate: {
+                path: 'batchId',
+            },
+        },
+    });
+    console.log(req.admin._id);
+    if (!attenance.subjectId.semesterId.batchId.adminId.equals(req.admin._id))
+        return next(new AppError('Attendance Not Found', 404));
     next();
 });
 
