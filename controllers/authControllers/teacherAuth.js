@@ -126,8 +126,16 @@ exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
 });
 
 exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
-    const subject = await Subject.findById(req.params.id);
+    const subject = await Subject.findById(req.params.id).populate({
+        path: 'semesterId',
+        populate: {
+            path: 'batchId',
+        },
+    });
     if (!subject.teacherId.equals(req.teacher._id)) return next(new AppError('Subject Not Found', 404));
+    if (subject.archived === true) return next(new AppError('Subject is Archived', 401));
+    if (subject.semesterId.archived === true) return next(new AppError('Semester is Archived', 401));
+    if (subject.semesterId.batchId.archived === true) return next(new AppError('Batch is Archived', 401));
     next();
 });
 

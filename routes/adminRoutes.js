@@ -42,7 +42,10 @@ router.get(
     adminAuth.protect,
     adminController.getConfirmationToken
 );
+
 router.get('/confirmAccount/:token', adminController.confirmAccount);
+
+router.get('/deleteAccount/:token', adminController.deleteNonConfirmedAccount);
 
 router.patch('/updatePassword', adminAuth.protect, adminAuth.updatePassword);
 

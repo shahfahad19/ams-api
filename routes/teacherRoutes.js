@@ -18,7 +18,10 @@ router.get(
     teacherAuth.protect,
     teacherController.getConfirmationToken
 );
+
 router.get('/confirmAccount/:token', teacherController.confirmAccount);
+
+router.get('/deleteAccount/:token', teacherController.deleteNonConfirmedAccount);
 
 router.patch('/updatePassword', teacherAuth.protect, teacherAuth.updatePassword);
 

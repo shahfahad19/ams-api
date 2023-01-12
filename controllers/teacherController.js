@@ -84,6 +84,25 @@ exports.confirmAccount = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.deleteNonConfirmedAccount = catchAsync(async (req, res, next) => {
+    // 1) Get teacher based on the token
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const teacher = await Teacher.findOne({
+        confirmationToken: hashedToken,
+    });
+
+    // 2) If token has not expired, confirm account
+    if (!teacher) {
+        return next(new AppError('Token is invalid or account is already confirmed', 400));
+    }
+
+    await teacher.delete();
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    });
+});
+
 exports.updateMe = catchAsync(async (req, res, next) => {
     // 1) Create error if user POSTs password data
     if (req.body.password || req.body.passwordConfirm) {

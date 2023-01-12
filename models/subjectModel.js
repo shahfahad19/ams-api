@@ -15,6 +15,10 @@ const subjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
     },
+    archived: {
+        type: Boolean,
+        default: false,
+    },
     createdAt: {
         type: Date,
         select: false,

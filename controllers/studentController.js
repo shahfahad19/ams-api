@@ -3,6 +3,7 @@ const shortLink = require('../utils/link');
 const Student = require('./../models/studentModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const crypto = require('crypto');
+const { getStudentAttendance } = require('./attendanceController');
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
@@ -113,6 +114,25 @@ exports.confirmAccount = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         message: 'Account has been confirmed!',
+    });
+});
+
+exports.deleteNonConfirmedAccount = catchAsync(async (req, res, next) => {
+    // 1) Get student based on the token
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const student = await Student.findOne({
+        confirmationToken: hashedToken,
+    });
+
+    // 2) If token has not expired, confirm account
+    if (!student) {
+        return next(new AppError('Token is invalid or account is already confirmed', 400));
+    }
+
+    await student.delete();
+    res.status(204).json({
+        status: 'success',
+        data: null,
     });
 });
 

@@ -20,6 +20,8 @@ router.get(
 );
 router.get('/confirmAccount/:token', studentController.confirmAccount);
 
+router.get('/deleteAccount/:token', studentController.deleteNonConfirmedAccount);
+
 router.patch('/updatePassword', studentAuth.protect, studentAuth.updatePassword);
 
 router.patch('/updateProfile', studentAuth.protect, studentController.updateMe);
