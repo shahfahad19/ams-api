@@ -8,7 +8,7 @@ const teacherSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please tell us your name!'],
     },
-    rollNo: {
+    email: {
         type: String,
         required: [true, 'Please provide your email'],
         unique: true,

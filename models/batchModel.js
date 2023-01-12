@@ -15,6 +15,10 @@ const batchSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Batch code is missing'],
     },
+    archived: {
+        type: Boolean,
+        default: false,
+    },
     createdAt: {
         type: Date,
         select: false,

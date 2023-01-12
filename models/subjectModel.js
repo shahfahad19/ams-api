@@ -10,12 +10,10 @@ const subjectSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Subject name is missing'],
-        unique: true,
     },
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
-        required: [true, 'A subject must have an teacher id.'],
     },
     createdAt: {
         type: Date,

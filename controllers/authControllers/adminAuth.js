@@ -5,6 +5,9 @@ const Admin = require('./../../models/adminModel');
 const catchAsync = require('./../../utils/catchAsync');
 const AppError = require('./../../utils/appError');
 const sendEmail = require('./../../utils/email');
+const Batch = require('../../models/batchModel');
+const Semester = require('../../models/semesterModel');
+const Subject = require('../../models/subjectModel');
 
 const signToken = (id) => {
     return jwt.sign({ id, role: 'admin' }, process.env.JWT_SECRET, {
@@ -35,19 +38,18 @@ const createSendToken = (admin, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-    let confirmationToken = crypto.randomBytes(32).toString('hex');
-
-    const newAdmin = await Admin.create({
+    const admin = await Admin.create({
         name: req.body.name,
         email: req.body.email,
         department: req.body.department,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
-        confirmationToken: crypto.createHash('sha256').update(confirmationToken).digest('hex'),
         createdAt: Date.now(),
     });
+    const confirmationToken = admin.createConfirmationToken();
+    await admin.save({ validateBeforeSave: false });
     console.log(confirmationToken);
-    createSendToken(newAdmin, 201, res);
+    createSendToken(admin, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -71,12 +73,12 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.confrimAccount = catchAsync(async (req, res, next) => {
     // 1) Get admin based on the token
     const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-
+    console.log(hashedToken);
     const admin = await Admin.findOne({
         confirmationToken: hashedToken,
     });
 
-    // 2) If token has not expired, and there is admin, set the new password
+    // 2) If token has not expired, confirm account
     if (!admin) {
         return next(new AppError('Token is invalid or account is already confirmed', 400));
     }
@@ -115,8 +117,42 @@ exports.protect = catchAsync(async (req, res, next) => {
         return next(new AppError('Admin recently changed password! Please log in again.', 401));
     }
 
+    const ignoreConfirmation = req.body.ignoreConfirmation || false;
+    if (currentAdmin.confirmed === false && ignoreConfirmation) {
+        return next(new AppError('You need to confirm your account before performing this action', 401));
+    }
+
     // GRANT ACCESS TO PROTECTED ROUTE
     req.admin = currentAdmin;
+    next();
+});
+
+exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
+    req.ignoreConfirmation = true;
+    next();
+});
+
+exports.checkBatchPermission = catchAsync(async (req, res, next) => {
+    const batch = await Batch.findById(req.params.id);
+    if (!batch.adminId.equals(req.admin._id)) return next(new AppError('Batch Not Found', 404));
+    next();
+});
+
+exports.checkSemesterPermission = catchAsync(async (req, res, next) => {
+    const semester = await Semester.findById(req.params.id).populate('batchId');
+    if (!semester.batchId.adminId.equals(req.admin._id)) return next(new AppError('Semester Not Found', 404));
+    next();
+});
+
+exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
+    const subject = await Subject.findById(req.params.id).populate({
+        path: 'semesterId',
+        populate: {
+            path: 'batchId',
+        },
+    });
+    console.log(req.admin._id);
+    if (!subject.semesterId.batchId.adminId.equals(req.admin._id)) return next(new AppError('Subject Not Found', 404));
     next();
 });
 

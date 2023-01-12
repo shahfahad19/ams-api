@@ -1,7 +1,5 @@
 const catchAsync = require('../utils/catchAsync');
 const Batch = require('./../models/batchModel');
-const jwt = require('jsonwebtoken');
-const { promisify } = require('util');
 const APIFeatures = require('./../utils/apiFeatures');
 const AppError = require('../utils/appError');
 
@@ -13,13 +11,8 @@ const filterObj = (obj, ...allowedFields) => {
     return newObj;
 };
 
-const getAdminID = async (req) => {
-    let adminId = await promisify(jwt.verify)(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET);
-    return adminId.id;
-};
-
 exports.getAllBatches = catchAsync(async (req, res) => {
-    let adminId = await getAdminID(req);
+    let adminId = req.admin._id;
     const features = new APIFeatures(Batch.find(), req.query)
         .filter()
         .sort()
@@ -29,8 +22,9 @@ exports.getAllBatches = catchAsync(async (req, res) => {
 
     let batchArray = [];
 
+    // if (batch.adminId._id === adminId)
     batches.forEach((batch, i) => {
-        if (batch.adminId._id.toString() === adminId)
+        if (batch.adminId._id.equals(adminId))
             batchArray.push({
                 _id: batch._id,
                 name: batch.name,
@@ -49,9 +43,9 @@ exports.getAllBatches = catchAsync(async (req, res) => {
 });
 
 exports.createBatch = catchAsync(async (req, res) => {
-    const adminId = await promisify(jwt.verify)(req.headers.authorization.split(' ')[1], process.env.JWT_SECRET);
+    const adminId = req.admin._id;
     const batch = {
-        adminId: adminId.id,
+        adminId,
         name: req.body.name,
         batchCode: req.body.batchCode,
         createdAt: Date.now(),
@@ -67,10 +61,6 @@ exports.createBatch = catchAsync(async (req, res) => {
 
 exports.getBatch = catchAsync(async (req, res, next) => {
     const batch = await Batch.findById(req.params.id);
-    const adminId = await getAdminID(req);
-
-    // If this batch doesn't belong to the admin, return error
-    if (batch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
     res.status(200).json({
         status: 'success',
         data: {
@@ -80,13 +70,7 @@ exports.getBatch = catchAsync(async (req, res, next) => {
 });
 
 exports.updateBatch = catchAsync(async (req, res, next) => {
-    const getbatch = await Batch.findById(req.params.id);
-    const adminId = await getAdminID(req);
-
-    // If this batch doesn't belong to the admin, return error
-    if (getbatch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
-
-    const filteredObj = filterObj(req.body, 'name', 'batchCode');
+    const filteredObj = filterObj(req.body, 'name', 'batchCode', 'archived');
     const batch = await Batch.findByIdAndUpdate(req.params.id, filteredObj, {
         new: true,
     }).select('-adminId');
@@ -100,12 +84,6 @@ exports.updateBatch = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteBatch = catchAsync(async (req, res, next) => {
-    const getbatch = await Batch.findById(req.params.id);
-    const adminId = await getAdminID(req);
-
-    // If this batch doesn't belong to the admin, return error
-    if (getbatch.adminId.toString() !== adminId) return next(new AppError('Batch not found', 404));
-
     await Batch.findByIdAndDelete(req.params.id);
 
     res.status(204).json({

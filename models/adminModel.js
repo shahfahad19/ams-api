@@ -98,6 +98,14 @@ adminSchema.methods.createPasswordResetToken = function () {
     return resetToken;
 };
 
+adminSchema.methods.createConfirmationToken = function () {
+    const confirmationToken = crypto.randomBytes(32).toString('hex');
+
+    this.confirmationToken = crypto.createHash('sha256').update(confirmationToken).digest('hex');
+
+    return confirmationToken;
+};
+
 const Admin = mongoose.model('Admin', adminSchema);
 
 module.exports = Admin;

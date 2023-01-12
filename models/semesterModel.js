@@ -10,12 +10,19 @@ const semesterSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Semester name is missing'],
-        unique: true,
+    },
+    archived: {
+        type: Boolean,
+        default: false,
     },
     createdAt: {
         type: Date,
         select: false,
     },
+});
+
+semesterSchema.virtual('adminId').get(function () {
+    return this.batchId.adminId;
 });
 
 const Semester = mongoose.model('Semester', semesterSchema);

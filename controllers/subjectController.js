@@ -21,17 +21,18 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
     let subjectsArray = [];
 
     subjects.forEach((subject, i) => {
-        subjectsArray[i] = {
-            _id: subject._id,
-            name: subject.name,
-            teacherId: subject.teacherId._id,
-            teacherName: subject.teacherId.name,
-            semesterId: subject.semesterId._id,
-            semesterName: subject.semesterId.name,
-            batchId: subject.semesterId.batchId._id,
-            batchName: subject.semesterId.batchId.name,
-            department: subject.semesterId.batchId.adminId.department,
-        };
+        if (subject.semesterId.batchId.adminId.equals(req.admin._id))
+            subjectsArray.push({
+                _id: subject._id,
+                name: subject.name,
+                teacherId: subject.teacherId._id,
+                teacherName: subject.teacherId.name,
+                semesterId: subject.semesterId._id,
+                semesterName: subject.semesterId.name,
+                batchId: subject.semesterId.batchId._id,
+                batchName: subject.semesterId.batchId.name,
+                department: subject.semesterId.batchId.adminId.department,
+            });
     });
 
     // SEND RESPONSE
@@ -58,22 +59,17 @@ exports.getSubject = catchAsync(async (req, res) => {
     res.status(200).json({
         status: 'success',
         data: {
-            subject: {
-                _id: subject._id,
-                name: subject.name,
-                teacherId: subject.teacherId._id,
-                teacherName: subject.teacherId.name,
-                semesterId: subject.semesterId._id,
-                semesterName: subject.semesterId.name,
-                batchId: subject.semesterId.batchId._id,
-                batchName: subject.semesterId.batchId.name,
-            },
+            subject,
         },
     });
 });
 
 exports.createSubject = catchAsync(async (req, res) => {
-    const newSubject = await Subject.create(req.body);
+    const newSubject = await Subject.create({
+        name: req.body.name,
+        semesterId: req.params.id,
+        createdAt: Date.now(),
+    });
     res.status(201).json({
         status: 'success',
         data: {
