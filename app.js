@@ -9,9 +9,9 @@ const adminRouter = require('./routes/adminRoutes');
 const studentRouter = require('./routes/studentRoutes');
 const teacherRouter = require('./routes/teacherRoutes');
 
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser);
-app.use(cors());
 app.get('/', (req, res) => {
     res.end('AMS API is running');
 });
