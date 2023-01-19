@@ -133,23 +133,13 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
             path: 'batchId',
         },
     });
+    if (!subject) return next(new AppError('Subject Not Found', 404));
     if (!subject.teacherId.equals(req.teacher._id)) return next(new AppError('Subject Not Found', 404));
     if (subject.archived === true) return next(new AppError('Subject is Archived', 401));
     if (subject.semesterId.archived === true) return next(new AppError('Semester is Archived', 401));
     if (subject.semesterId.batchId.archived === true) return next(new AppError('Batch is Archived', 401));
     next();
 });
-
-exports.restrictTo = (...roles) => {
-    return (req, res, next) => {
-        // roles ['teacher', 'lead-guide']. role='teacher'
-        if (!roles.includes(req.teacher.role)) {
-            return next(new AppError('You do not have permission to perform this action', 403));
-        }
-
-        next();
-    };
-};
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get teacher based on POSTed email

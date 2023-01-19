@@ -25,7 +25,7 @@ const createSendToken = (admin, statusCode, res) => {
         httpOnly: true,
     };
     if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-
+    console.log(process.env.NODE_ENV);
     res.cookie('jwt', token, cookieOptions);
 
     // Remove password from output
@@ -128,12 +128,14 @@ exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
 
 exports.checkBatchPermission = catchAsync(async (req, res, next) => {
     const batch = await Batch.findById(req.params.id);
+    if (!batch) return next(new AppError('Batch Not Found', 404));
     if (!batch.adminId.equals(req.admin._id)) return next(new AppError('Batch Not Found', 404));
     next();
 });
 
 exports.checkSemesterPermission = catchAsync(async (req, res, next) => {
     const semester = await Semester.findById(req.params.id).populate('batchId');
+    if (!semester) return next(new AppError('Semester Not Found', 404));
     if (!semester.batchId.adminId.equals(req.admin._id)) return next(new AppError('Semester Not Found', 404));
     next();
 });
@@ -145,6 +147,7 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
             path: 'batchId',
         },
     });
+    if (!subject) return next(new AppError('Subject Not Found', 404));
     if (!subject.semesterId.batchId.adminId.equals(req.admin._id)) return next(new AppError('Subject Not Found', 404));
     next();
 });
@@ -153,6 +156,7 @@ exports.checkStudentPermission = catchAsync(async (req, res, next) => {
     const student = await Student.findById(req.params.id).populate({
         path: 'batchId',
     });
+    if (!student) return next(new AppError('Student Not Found', 404));
     if (!student.batchId.adminId.equals(req.admin._id)) return next(new AppError('Student Not Found', 404));
     next();
 });
@@ -173,22 +177,11 @@ exports.checkAttendancePermission = catchAsync(async (req, res, next) => {
     next();
 });
 
-exports.restrictTo = (...roles) => {
-    return (req, res, next) => {
-        // roles ['admin', 'lead-guide']. role='admin'
-        if (!roles.includes(req.admin.role)) {
-            return next(new AppError('You do not have permission to perform this action', 403));
-        }
-
-        next();
-    };
-};
-
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get admin based on POSTed email
     const admin = await Admin.findOne({ email: req.body.email });
     if (!admin) {
-        return next(new AppError('There is no admin with email address.', 404));
+        return next(new AppError('There is no user with email address.', 404));
     }
 
     // 2) Generate the random reset token

@@ -121,17 +121,6 @@ exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
     next();
 });
 
-exports.restrictTo = (...roles) => {
-    return (req, res, next) => {
-        // roles ['student', 'lead-guide']. role='student'
-        if (!roles.includes(req.student.role)) {
-            return next(new AppError('You do not have permission to perform this action', 403));
-        }
-
-        next();
-    };
-};
-
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     // 1) Get student based on POSTed email
     const student = await Student.findOne({ email: req.body.email });

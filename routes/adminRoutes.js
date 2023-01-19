@@ -63,6 +63,8 @@ router
     .patch(adminAuth.protect, adminAuth.checkBatchPermission, batchController.updateBatch)
     .delete(adminAuth.protect, adminAuth.checkBatchPermission, batchController.deleteBatch);
 
+router.get('/batch/:id/updatecode', adminAuth.protect, adminAuth.checkBatchPermission, batchController.updateBatchCode);
+
 // SEMESTERS
 router
     .route('/batch/:id/semesters')

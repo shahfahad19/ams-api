@@ -1,4 +1,5 @@
 const catchAsync = require('../utils/catchAsync');
+const crypto = require('crypto');
 const Batch = require('./../models/batchModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const AppError = require('../utils/appError');
@@ -40,7 +41,7 @@ exports.createBatch = catchAsync(async (req, res) => {
     const batch = {
         adminId,
         name: req.body.name,
-        batchCode: req.body.batchCode,
+        batchCode: crypto.randomBytes(2).toString('hex').toUpperCase(),
         createdAt: Date.now(),
     };
     const newBatch = await Batch.create(batch);
@@ -63,10 +64,27 @@ exports.getBatch = catchAsync(async (req, res, next) => {
 });
 
 exports.updateBatch = catchAsync(async (req, res, next) => {
-    const filteredObj = filterObj(req.body, 'name', 'batchCode', 'archived');
+    const filteredObj = filterObj(req.body, 'name', 'archived');
     const batch = await Batch.findByIdAndUpdate(req.params.id, filteredObj, {
         new: true,
     }).select('-adminId');
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            batch,
+        },
+    });
+});
+
+exports.updateBatchCode = catchAsync(async (req, res, next) => {
+    const batch = await Batch.findByIdAndUpdate(
+        req.params.id,
+        { batchCode: crypto.randomBytes(2).toString('hex').toUpperCase() },
+        {
+            new: true,
+        }
+    ).select('batchCode');
 
     res.status(200).json({
         status: 'success',
