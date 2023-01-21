@@ -6,6 +6,7 @@ const subjectController = require('./../controllers/subjectController');
 const studentController = require('./../controllers/studentController');
 const attendanceController = require('./../controllers/attendanceController');
 const adminAuth = require('./../controllers/authControllers/adminAuth');
+const { verifyCaptcha } = require('../controllers/authControllers/recaptcha');
 
 /*
 -------------FUNCTIONS IN batchController
@@ -33,12 +34,13 @@ const router = express.Router();
 
 // Account Controls
 router.get('/', adminAuth.protect, adminController.getAdmin);
-router.post('/signup', adminAuth.signup);
-router.post('/login', adminAuth.login);
-router.post('/forgotPassword', adminAuth.forgotPassword);
+router.post('/signup', verifyCaptcha, adminAuth.signup);
+router.post('/login', verifyCaptcha, adminAuth.login);
+router.post('/forgotPassword', verifyCaptcha, adminAuth.forgotPassword);
 router.patch('/resetPassword/:token', adminAuth.resetPassword);
 router.get(
     '/getConfirmationToken',
+    verifyCaptcha,
     adminAuth.ignoreConfirmation,
     adminAuth.protect,
     adminController.getConfirmationToken
