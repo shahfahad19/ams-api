@@ -21,7 +21,7 @@ exports.getAllBatches = catchAsync(async (req, res) => {
         req.query
     )
         .filter()
-        .sort()
+        .sort('archived', 'createdAt')
         .limit('id', 'name', 'batchCode')
         .paginate();
     const batches = await features.query;

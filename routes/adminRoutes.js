@@ -94,7 +94,7 @@ router
     .delete(adminAuth.protect, adminAuth.checkAttendancePermission, attendanceController.deleteAttendance);
 
 router.get(
-    '/attendance/subject/:id',
+    '/subject/:id/attendance',
     adminAuth.protect,
     adminAuth.checkSubjectPermission,
     attendanceController.getSubjectAttendance

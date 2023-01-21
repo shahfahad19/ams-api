@@ -3,7 +3,11 @@ const Subject = require('./../models/subjectModel');
 const APIFeatures = require('./../utils/apiFeatures');
 
 exports.getAllSubjects = catchAsync(async (req, res) => {
-    const features = new APIFeatures(Subject.find(), req.query).filter().sort().limit().paginate();
+    const features = new APIFeatures(Subject.find({ semesterId: req.params.id }), req.query)
+        .filter()
+        .sort()
+        .limit()
+        .paginate();
 
     const subjects = await features.query;
 
