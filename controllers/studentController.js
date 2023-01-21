@@ -14,7 +14,11 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.getAllStudents = catchAsync(async (req, res) => {
-    const features = new APIFeatures(Student.find(), req.query).filter().sort().limit().paginate();
+    const features = new APIFeatures(Student.find({ batchId: req.params.id }), req.query)
+        .filter()
+        .sort()
+        .limit()
+        .paginate();
     const students = await features.query;
     // SEND RESPONSE
     res.status(200).json({

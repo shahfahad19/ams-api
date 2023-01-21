@@ -19,6 +19,11 @@ const studentSchema = new mongoose.Schema({
         lowercase: true,
         validate: [validator.isEmail, 'Please provide a valid email'],
     },
+    batchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Batch',
+        required: [true, 'A semester must have an batch id.'],
+    },
     photo: String,
     password: {
         type: String,
@@ -36,6 +41,11 @@ const studentSchema = new mongoose.Schema({
             },
             message: 'Passwords are not the same!',
         },
+    },
+
+    active: {
+        type: Boolean,
+        default: true,
     },
     passwordChangedAt: Date,
     passwordResetToken: String,

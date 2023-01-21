@@ -6,6 +6,7 @@ const catchAsync = require('./../../utils/catchAsync');
 const AppError = require('./../../utils/appError');
 const sendEmail = require('./../../utils/email');
 const shortLink = require('../../utils/link');
+const Batch = require('../../models/batchModel');
 
 const signToken = (id) => {
     return jwt.sign({ id, role: 'student' }, process.env.JWT_SECRET, {
@@ -37,10 +38,17 @@ const createSendToken = (student, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+    const batchCode = req.body.batchCode;
+    const batch = await Batch.findOne({ batchCode: batchCode }).select('_id');
+    if (!batch) {
+        return next(new AppError('Batch Code is Invalid'), 401);
+    }
     const student = await Student.create({
         name: req.body.name,
         rollNo: req.body.rollNo,
+        batchId: batch._id,
         email: req.body.email,
+        active: true,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
         createdAt: Date.now(),

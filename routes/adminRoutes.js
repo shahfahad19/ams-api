@@ -3,6 +3,7 @@ const batchController = require('./../controllers/batchController');
 const adminController = require('./../controllers/adminController');
 const semesterController = require('./../controllers/semesterController');
 const subjectController = require('./../controllers/subjectController');
+const studentController = require('./../controllers/studentController');
 const attendanceController = require('./../controllers/attendanceController');
 const adminAuth = require('./../controllers/authControllers/adminAuth');
 
@@ -64,6 +65,9 @@ router
     .delete(adminAuth.protect, adminAuth.checkBatchPermission, batchController.deleteBatch);
 
 router.get('/batch/:id/updatecode', adminAuth.protect, adminAuth.checkBatchPermission, batchController.updateBatchCode);
+
+// STUDENTS
+router.get('/batch/:id/students', adminAuth.protect, adminAuth.checkBatchPermission, studentController.getAllStudents);
 
 // SEMESTERS
 router
