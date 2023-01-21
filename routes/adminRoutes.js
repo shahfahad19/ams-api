@@ -88,6 +88,7 @@ router
     .get(adminAuth.protect, adminAuth.checkSemesterPermission, subjectController.getAllSubjects)
     .post(adminAuth.protect, adminAuth.checkSemesterPermission, subjectController.createSubject);
 
+// SUBJECTS
 router
     .route('/subject/:id')
     .get(adminAuth.protect, adminAuth.checkSubjectPermission, subjectController.getSubject)
