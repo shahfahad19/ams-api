@@ -51,15 +51,26 @@ exports.signup = catchAsync(async (req, res, next) => {
         createdAt: Date.now(),
     });
     const confirmationToken = admin.createConfirmationToken();
-    let link = process.env.HOME_URL + '/admin/confirmAccount/' + confirmationToken;
+
+    //confirmation link
+    let link = `${process.env.HOME_URL}/confirmAccount/?token=${confirmationToken}&r=1`;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
-    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+
+    //deletion link
+    let deleteLink = `${process.env.HOME_URL}/deleteAccount/?token=${confirmationToken}&r=1`;
+    const shortendeleteLink = await shortLink(deleteLink);
+    if (shortendeleteLink.data.shortLink) deleteLink = shortendeleteLink.data.shortLink;
+
     try {
         await sendEmail({
             email: admin.email,
             subject: 'Confirm your account',
-            message,
+            name: admin.name,
+            links: {
+                link,
+                deleteLink,
+            },
         });
     } catch (err) {}
     await admin.save({ validateBeforeSave: false });

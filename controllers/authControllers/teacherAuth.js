@@ -50,10 +50,10 @@ exports.signup = catchAsync(async (req, res, next) => {
         createdAt: Date.now(),
     });
     const confirmationToken = teacher.createConfirmationToken();
-    let link = process.env.HOME_URL + '/teacher/confirmAccount/' + confirmationToken;
+    let link = `${process.env.HOME_URL}/confirmAccount/${confirmationToken}?r=3`;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
-    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+    let message = `<h1>Welcome to the Attendance Managment System</h1><br/>Please confirm your account by clicking on following link.<br/><a href='${link}`;
     try {
         await sendEmail({
             email: teacher.email,
