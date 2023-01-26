@@ -1,34 +1,25 @@
 const catchAsync = require('../utils/catchAsync');
 const Semester = require('./../models/semesterModel');
 const APIFeatures = require('./../utils/apiFeatures');
-const AppError = require('../utils/appError');
-
-const filterObj = (obj, ...allowedFields) => {
-    const newObj = {};
-    Object.keys(obj).forEach((el) => {
-        if (allowedFields.includes(el)) newObj[el] = obj[el];
-    });
-    return newObj;
-};
 
 exports.getAllSemesters = catchAsync(async (req, res) => {
-    const features = new APIFeatures(Semester.find({ batchId: req.params.id }), req.query)
+    const features = new APIFeatures(Semester.find({ batch: req.params.id }), req.query)
         .filter()
         .sort()
         .limit()
         .paginate();
-    const semesters = await features.query;
+    const semesters = await features.query.populate('batch');
 
     // let semesterArray = [];
 
     // semesters.forEach((semester, i) => {
-    //     if (semester.batchId.adminId.equals(req.admin._id))
+    //     if (semester.batch.admin.equals(req.admin._id))
     //         semesterArray[i] = {
     //             _id: semester._id,
     //             name: semester.name,
-    //             batchId: semester.batchId._id,
-    //             batchName: semester.batchId.name,
-    //             department: semester.batchId.adminId.department,
+    //             batch: semester.batch._id,
+    //             batchName: semester.batch.name,
+    //             department: semester.batch.admin.department,
     //         };
     // });
     //        SEND RESPONSE
@@ -42,7 +33,7 @@ exports.getAllSemesters = catchAsync(async (req, res) => {
 });
 
 exports.getSemester = catchAsync(async (req, res) => {
-    const semester = await Semester.findById(req.params.id).populate('batchId');
+    const semester = await Semester.findById(req.params.id).populate('batch');
 
     res.status(200).json({
         status: 'success',
@@ -53,9 +44,10 @@ exports.getSemester = catchAsync(async (req, res) => {
 });
 
 exports.createSemester = catchAsync(async (req, res) => {
+    console.log(req.params);
     const newSemester = await Semester.create({
         name: req.body.name,
-        batchId: req.params.id,
+        batch: req.params.id,
         createdAt: Date.now(),
     });
     res.status(201).json({
@@ -69,7 +61,7 @@ exports.createSemester = catchAsync(async (req, res) => {
 exports.updateSemester = catchAsync(async (req, res) => {
     const semester = await Semester.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
-    }).populate('batchId');
+    }).populate('batch');
 
     res.status(200).json({
         status: 'success',

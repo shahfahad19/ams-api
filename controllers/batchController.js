@@ -13,10 +13,10 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.getAllBatches = catchAsync(async (req, res) => {
-    let adminId = req.admin._id;
+    let admin = req.user._id;
     const features = new APIFeatures(
         Batch.find({
-            adminId,
+            admin,
         }).select('-adminId'),
         req.query
     )
@@ -36,12 +36,12 @@ exports.getAllBatches = catchAsync(async (req, res) => {
     });
 });
 
-exports.createBatch = catchAsync(async (req, res) => {
-    const adminId = req.admin._id;
+exports.createBatch = catchAsync(async (req, res, next) => {
+    const admin = req.user._id;
     const batch = {
-        adminId,
+        admin,
         name: req.body.name,
-        batchCode: crypto.randomBytes(2).toString('hex').toUpperCase(),
+        batchCode: crypto.randomBytes(3).toString('hex').toUpperCase(),
         createdAt: Date.now(),
     };
     const newBatch = await Batch.create(batch);
@@ -67,7 +67,7 @@ exports.updateBatch = catchAsync(async (req, res, next) => {
     const filteredObj = filterObj(req.body, 'name', 'archived');
     const batch = await Batch.findByIdAndUpdate(req.params.id, filteredObj, {
         new: true,
-    }).select('-adminId');
+    }).select('-admin');
 
     res.status(200).json({
         status: 'success',

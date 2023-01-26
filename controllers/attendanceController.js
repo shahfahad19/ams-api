@@ -7,41 +7,41 @@ const AppError = require('./../utils/appError');
 exports.getAttendance = catchAsync(async (req, res) => {
     const attendance = await Attendance.findById(req.params.id)
         .populate({
-            path: 'subjectId',
+            path: 'subject',
             populate: {
-                path: 'teacherId',
+                path: 'teacher',
             },
         })
         .populate({
-            path: 'subjectId',
+            path: 'subject',
             populate: {
-                path: 'semesterId',
+                path: 'semester',
             },
         })
         .populate({
             path: 'attendances',
             populate: {
-                path: 'studentId',
+                path: 'student',
             },
         });
     let sepAtt = [];
     attendance.attendances.forEach((sepatt, index) => {
         sepAtt[index] = {
-            studentId: sepatt.studentId._id,
-            rollNo: sepatt.studentId.rollNo,
-            name: sepatt.studentId.name,
+            student: sepatt.student._id,
+            rollNo: sepatt.student.rollNo,
+            name: sepatt.student.name,
             status: sepatt.status,
         };
     });
     const refactoredAttendanceArray = {
         _id: attendance._id,
         date: attendance.date,
-        subjectId: attendance.subjectId._id,
-        subjectName: attendance.subjectId.name,
-        teacherId: attendance.subjectId.teacherId._id,
-        teacherName: attendance.subjectId.teacherId.name,
-        semesterId: attendance.subjectId.semesterId._id,
-        semester: attendance.subjectId.semesterId.name,
+        subject: attendance.subject._id,
+        subjectName: attendance.subject.name,
+        teacher: attendance.subject.teacher._id,
+        teacherName: attendance.subject.teacher.name,
+        semester: attendance.subject.semester._id,
+        semester: attendance.subject.semester.name,
         attendance: sepAtt,
     };
     res.status(200).json({
@@ -67,12 +67,12 @@ exports.deleteAttendance = catchAsync(async (req, res) => {
 
 exports.getSubjectAttendance = catchAsync(async (req, res) => {
     //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-    const subjectId = mongoose.Types.ObjectId('63ac1c21f1000278723b489a');
+    const subject = mongoose.Types.ObjectId('63ac1c21f1000278723b489a');
     const attendances = await Attendance.aggregate([
         {
             $lookup: {
                 from: 'subjects',
-                localField: 'subjectId',
+                localField: 'subject',
                 foreignField: '_id',
                 as: 'subject',
             },
@@ -82,7 +82,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
         },
         {
             $match: {
-                'subject._id': subjectId,
+                'subject._id': subject,
             },
         },
         {
@@ -111,11 +111,11 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 
 // exports.getSubjectAttendance = catchAsync(async (req, res) => {
 //     //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-//     const subjectId = mongoose.Types.ObjectId(req.params.subject);
+//     const subject = mongoose.Types.ObjectId(req.params.subject);
 //     const attendances = await Attendance.aggregate([
 //         {
 //             $match: {
-//                 subjectId: subjectId,
+//                 subject: subject,
 //             },
 //         },
 //         {
@@ -129,7 +129,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 //         {
 //             $lookup: {
 //                 from: 'students',
-//                 localField: 'attendances.studentId',
+//                 localField: 'attendances.student',
 //                 foreignField: '_id',
 //                 as: 'student',
 //             },
@@ -158,7 +158,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 //             },
 //         },
 //         {
-//             $unset: 'attendance.studentId',
+//             $unset: 'attendance.student',
 //         },
 //         {
 //             $unset: 'attendance._id',
@@ -210,16 +210,16 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 //     //     let sepAtt = [];
 //     //     attendance.attendances.forEach((sepatt, index) => {
 //     //         sepAtt[index] = {
-//     //             studentId: sepatt.studentId._id,
-//     //             rollNo: sepatt.studentId.rollNo,
-//     //             name: sepatt.studentId.name,
+//     //             student: sepatt.student._id,
+//     //             rollNo: sepatt.student.rollNo,
+//     //             name: sepatt.student.name,
 //     //             status: sepatt.status,
 //     //         };
 //     //     });
 //     //     refactoredAttendanceArray[index] = {
 //     //         _id: attendance._id,
 //     //         date: attendance.date,
-//     //         subjectId: attendance.subjectId,
+//     //         subject: attendance.subject,
 //     //         attendance: sepAtt,
 //     //     };
 //     // });
@@ -241,7 +241,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
     const stdatt = await Attendance.aggregate([
         {
             $match: {
-                'attendances.studentId': student,
+                'attendances.student': student,
             },
         },
         {
@@ -249,12 +249,12 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         },
         {
             $match: {
-                'attendances.studentId': student,
+                'attendances.student': student,
             },
         },
         {
             $group: {
-                _id: '$subjectId',
+                _id: '$subject',
                 attendances: {
                     $push: '$attendances',
                 },
@@ -271,7 +271,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         {
             $lookup: {
                 from: 'teachers',
-                localField: 'subject.teacherId',
+                localField: 'subject.teacher',
                 foreignField: '_id',
                 as: 'teacher',
             },
@@ -280,7 +280,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         {
             $lookup: {
                 from: 'semesters',
-                localField: 'subject.semesterId',
+                localField: 'subject.semester',
                 foreignField: '_id',
                 as: 'semester',
             },
@@ -297,7 +297,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         {
             $lookup: {
                 from: 'students',
-                localField: 'attendances.studentId',
+                localField: 'attendances.student',
                 foreignField: '_id',
                 as: 'studentData',
             },
@@ -307,19 +307,19 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         },
         // {
         //     $match: {
-        //         'semester._id': semesterId,
+        //         'semester._id': semester,
         //     },
         // },
         {
             $project: {
-                studentId: '$studentData._id',
+                student: '$studentData._id',
                 studentName: '$studentData.name',
                 studentRollNo: '$studentData.rollNo',
-                subjectId: '$_id',
+                subject: '$_id',
                 subjectName: '$subject.name',
-                teacherId: '$teacher._id',
+                teacher: '$teacher._id',
                 teacherName: '$teacher.name',
-                semesterId: '$semester._id',
+                semester: '$semester._id',
                 semesterName: '$semester.name',
                 totalClass: {
                     $size: '$attendances',
@@ -393,7 +393,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
             $unset: '_id',
         },
         {
-            $unset: 'attendances.studentId',
+            $unset: 'attendances.student',
         },
         {
             $unset: 'attendances._id',
@@ -410,15 +410,15 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
 exports.createAttendance = catchAsync(async (req, res) => {
     const newAttendance = await Attendance.create(req.body)
         .populate({
-            path: 'subjectId',
+            path: 'subject',
             populate: {
-                path: 'teacherId',
+                path: 'teacher',
             },
         })
         .populate({
-            path: 'subjectId',
+            path: 'subject',
             populate: {
-                path: 'semesterId',
+                path: 'semester',
             },
         });
     res.status(201).json({

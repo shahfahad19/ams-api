@@ -6,15 +6,14 @@ const attendanceSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
-        subjectId: {
+        subject: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Subject',
             required: true,
-            select: false,
         },
         attendances: [
             {
-                studentId: {
+                student: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'Student',
                     required: true,
@@ -39,16 +38,16 @@ attendanceSchema.virtual('subjectName').get(function () {
     return this.subjectId.name;
 });
 attendanceSchema.virtual('semesterId').get(function () {
-    return this.subjectId.semesterId._id;
+    return this.subjectId.semester._id;
 });
 attendanceSchema.virtual('semesterName').get(function () {
-    return this.subjectId.semesterId.name;
+    return this.subjectId.semester.name;
 });
 attendanceSchema.virtual('teacherId').get(function () {
-    return this.subjectId.teacherId._id;
+    return this.subjectId.teacher._id;
 });
 attendanceSchema.virtual('teacherName').get(function () {
-    return this.subjectId.teacherId.name;
+    return this.subjectId.teacher.name;
 });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);

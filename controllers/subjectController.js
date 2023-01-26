@@ -14,17 +14,17 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
     let subjectsArray = [];
 
     // subjects.forEach((subject, i) => {
-    //     //if (subject.semesterId.batchId.adminId.equals(req.admin._id))
+    //     //if (subject.semester.batch.admin.equals(req.admin._id))
     //     subjectsArray.push({
     //         _id: subject._id,
     //         name: subject.name,
-    //         teacherId: subject.teacherId._id,
-    //         teacherName: subject.teacherId.name,
-    //         semesterId: subject.semesterId._id,
-    //         semesterName: subject.semesterId.name,
-    //         batchId: subject.semesterId.batchId._id,
-    //         batchName: subject.semesterId.batchId.name,
-    //         department: subject.semesterId.batchId.adminId.department,
+    //         teacherId: subject.teacher._id,
+    //         teacherName: subject.teacher.name,
+    //         semesterId: subject.semester._id,
+    //         semesterName: subject.semester.name,
+    //         batchId: subject.semester.batch._id,
+    //         batchName: subject.semester.batch.name,
+    //         department: subject.semester.batch.admin.department,
     //     });
     // });
 

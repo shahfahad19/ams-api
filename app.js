@@ -5,9 +5,11 @@ const cookieParser = require('cookie-parser');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
-const adminRouter = require('./routes/adminRoutes');
-const studentRouter = require('./routes/studentRoutes');
-const teacherRouter = require('./routes/teacherRoutes');
+const authRouter = require('./routes/authRoutes');
+const batchRouter = require('./routes/batchRoutes');
+const semesterRouter = require('./routes/semesterRoutes');
+const subjectRouter = require('./routes/subjectRoutes');
+const attendanceRouter = require('./routes/attendanceRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -17,9 +19,11 @@ app.get('/', (req, res) => {
     res.end('AMS API is running');
 });
 
-app.use('/admin', adminRouter);
-app.use('/student', studentRouter);
-app.use('/teacher', teacherRouter);
+app.use('/user', authRouter);
+app.use('/batches', batchRouter);
+app.use('/semesters', semesterRouter);
+app.use('/subjects', subjectRouter);
+app.use('/attendances', attendanceRouter);
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

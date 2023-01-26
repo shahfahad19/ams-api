@@ -1,17 +1,16 @@
 const mongoose = require('mongoose');
 
 const subjectSchema = new mongoose.Schema({
-    semesterId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Semester',
-        required: [true, 'A subject must have an semester id.'],
-    },
-
     name: {
         type: String,
         required: [true, 'Subject name is missing'],
     },
-    teacherId: {
+    semester: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Semester',
+        required: [true, 'A subject must have an semester id.'],
+    },
+    teacher: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
     },
@@ -24,6 +23,16 @@ const subjectSchema = new mongoose.Schema({
         select: false,
     },
 });
+
+subjectSchema.index(
+    {
+        name: 1,
+        semester: 1,
+    },
+    {
+        unique: true,
+    }
+);
 
 const Subject = mongoose.model('Subject', subjectSchema);
 
