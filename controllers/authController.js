@@ -10,6 +10,7 @@ const Semester = require('../models/semesterModel');
 const Subject = require('../models/subjectModel');
 const Attendance = require('../models/attendanceModel');
 const shortLink = require('../utils/link');
+const { default: axios } = require('axios');
 
 const signToken = (id) => {
     return jwt.sign({ id, role: 'admin' }, process.env.JWT_SECRET, {
