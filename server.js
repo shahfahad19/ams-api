@@ -13,9 +13,7 @@ const app = require('./app');
 const DB = process.env.DATABASE.replace('<password>', process.env.DATABASE_PASSWORD);
 mongoose.set('strictQuery', false);
 mongoose
-    .connect(DB, {
-        autoIndex: true, //make this also true
-    })
+    .connect(DB, { maxPoolSize: 100, autoIndex: true, socketTimeoutMS: 60000, connectTimeoutMS: 60000 })
     .then(() => console.log('DB connection successful!'));
 
 const port = process.env.PORT || 3000;
