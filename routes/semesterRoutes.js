@@ -5,10 +5,16 @@ const auth = require('../controllers/authController');
 const router = express.Router();
 
 // Getting semesters in a batch
+// url = /semesters?batch=123456789
 router
-    .route('/batch/:id')
-    .get(auth.protect, auth.restrictTo('admin', 'student'), semesterController.getAllSemesters)
-    .post(auth.protect, auth.restrictTo('admin'), semesterController.createSemester);
+    .route('/')
+    .get(
+        auth.protect,
+        auth.restrictTo('admin', 'student'),
+        auth.checkBatchPermission,
+        semesterController.getAllSemesters
+    )
+    .post(auth.protect, auth.restrictTo('admin'), auth.checkBatchPermission, semesterController.createSemester);
 
 // Semester Crud functions
 router

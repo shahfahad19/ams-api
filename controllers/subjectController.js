@@ -3,7 +3,13 @@ const Subject = require('./../models/subjectModel');
 const APIFeatures = require('./../utils/apiFeatures');
 
 exports.getAllSubjects = catchAsync(async (req, res) => {
-    const features = new APIFeatures(Subject.find({ semesterId: req.params.id }), req.query)
+    if (!req.query.semester) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Semester Id should be provided',
+        });
+    }
+    const features = new APIFeatures(Subject.find({ semester: req.query.semester }), req.query)
         .filter()
         .sort()
         .limit()
@@ -14,7 +20,7 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
     let subjectsArray = [];
 
     // subjects.forEach((subject, i) => {
-    //     //if (subject.semester.batch.admin.equals(req.admin._id))
+    //     //if (subject.semester.batch.admin.equals(req.user._id))
     //     subjectsArray.push({
     //         _id: subject._id,
     //         name: subject.name,
@@ -40,11 +46,11 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
 
 exports.getSubject = catchAsync(async (req, res) => {
     const subject = await Subject.findById(req.params.id)
-        .populate('teacherId')
+        .populate('teacher')
         .populate({
-            path: 'semesterId',
+            path: 'semester',
             populate: {
-                path: 'batchId',
+                path: 'batch',
             },
         })
         .select('-__v');
@@ -58,9 +64,15 @@ exports.getSubject = catchAsync(async (req, res) => {
 });
 
 exports.createSubject = catchAsync(async (req, res) => {
+    if (!req.query.semester) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Semester Id should be provided',
+        });
+    }
     const newSubject = await Subject.create({
         name: req.body.name,
-        semesterId: req.params.id,
+        semester: req.query.semester,
         createdAt: Date.now(),
     });
     res.status(201).json({

@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../controllers/authController');
 const userController = require('./../controllers/userController');
+const { upload } = require('../utils/imageUpload');
 
 const router = express.Router();
 
@@ -25,5 +26,7 @@ router.get('/deleteAccount/:token', userController.deleteNonConfirmedAccount);
 router.patch('/updatePassword', auth.protect, auth.updatePassword);
 
 router.patch('/updateProfile', auth.protect, userController.updateMe);
+
+router.post('/updatePhoto', auth.protect, upload.single('image'), userController.updateImage);
 
 module.exports = router;

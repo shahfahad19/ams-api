@@ -14,7 +14,13 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.getAllStudents = catchAsync(async (req, res) => {
-    const features = new APIFeatures(User.find({ batchId: req.params.id }), req.query)
+    if (!req.query.batch) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Batch Id should be provided',
+        });
+    }
+    const features = new APIFeatures(User.find({ batch: req.query.batch }), req.query)
         .filter()
         .sort()
         .limit()

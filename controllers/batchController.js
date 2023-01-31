@@ -41,7 +41,7 @@ exports.createBatch = catchAsync(async (req, res, next) => {
     const batch = {
         admin,
         name: req.body.name,
-        batchCode: crypto.randomBytes(3).toString('hex').toUpperCase(),
+        batchCode: crypto.randomBytes(2).toString('hex').toUpperCase(),
         createdAt: Date.now(),
     };
     const newBatch = await Batch.create(batch);

@@ -66,8 +66,13 @@ exports.deleteAttendance = catchAsync(async (req, res) => {
 // Get Attendance of a subject
 
 exports.getSubjectAttendance = catchAsync(async (req, res) => {
-    //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-    const subject = mongoose.Types.ObjectId('63ac1c21f1000278723b489a');
+    if (!req.query.subject) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Subject Id should be provided',
+        });
+    }
+    const subject = req.query.subject;
     const attendances = await Attendance.aggregate([
         {
             $lookup: {
@@ -236,8 +241,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 // Get Student Attendance
 
 exports.getStudentAttendance = catchAsync(async (req, res) => {
-    const student = mongoose.Types.ObjectId(req.params.studentid) || mongoose.Types.ObjectId(req.student._id);
-
+    const student = req.params.studentId;
     const stdatt = await Attendance.aggregate([
         {
             $match: {

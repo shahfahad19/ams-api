@@ -183,21 +183,24 @@ exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
 });
 
 exports.checkBatchPermission = catchAsync(async (req, res, next) => {
-    const batch = await Batch.findById(req.params.id);
+    const batchId = req.params.id || req.query.batch;
+    const batch = await Batch.findById(batchId);
     if (!batch) return next(new AppError('Batch Not Found', 404));
     if (!batch.admin.equals(req.user._id)) return next(new AppError('Batch Not Found', 404));
     next();
 });
 
 exports.checkSemesterPermission = catchAsync(async (req, res, next) => {
-    const semester = await Semester.findById(req.params.id).populate('batch');
+    const semesterId = req.params.id || req.query.semester;
+    const semester = await Semester.findById(semesterId).populate('batch');
     if (!semester) return next(new AppError('Semester Not Found', 404));
     if (!semester.batch.admin.equals(req.user._id)) return next(new AppError('Semester Not Found', 404));
     next();
 });
 
 exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
-    const subject = await Subject.findById(req.params.id).populate({
+    const subjectId = req.params.id || req.query.subject;
+    const subject = await Subject.findById(subjectId).populate({
         path: 'semester',
         populate: {
             path: 'batch',
@@ -209,7 +212,8 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkStudentPermission = catchAsync(async (req, res, next) => {
-    const student = await User.findOne({ role: 'student', _id: req.params.id }).populate({
+    const studentId = req.params.id || req.query.student;
+    const student = await User.findOne({ role: 'student', _id: studentId }).populate({
         path: 'batch',
     });
     if (!student) return next(new AppError('Student Not Found', 404));
@@ -218,7 +222,8 @@ exports.checkStudentPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkAttendancePermission = catchAsync(async (req, res, next) => {
-    const attenance = await Attendance.findById(req.params.id).populate({
+    const attendanceId = req.params.id || req.query.attendance;
+    const attenance = await Attendance.findById(attendanceId).populate({
         path: 'subject',
         populate: {
             path: 'semester',
@@ -330,3 +335,7 @@ exports.verifyCaptcha = catchAsync(async (req, res, next) => {
     if (verify.data.success) next();
     else next(new AppError('ReCaptcha Verification Failed', 403));
 });
+
+// exports.getVerificationCode = catchAsync(async (req, res, next) => {
+
+// }))

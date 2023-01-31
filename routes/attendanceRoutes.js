@@ -9,18 +9,8 @@ const router = express.Router();
 // Delete option is only for admin
 router
     .route('/')
-    .get(
-        auth.protect,
-        auth.restrictTo('admin'),
-        auth.checkAttendancePermission,
-        attendanceController.getSubjectAttendance
-    )
-    .post(
-        auth.protect,
-        auth.restrictTo('teacher'),
-        auth.checkAttendancePermission,
-        attendanceController.createAttendance
-    );
+    .get(auth.protect, auth.restrictTo('admin'), auth.checkSubjectPermission, attendanceController.getSubjectAttendance)
+    .post(auth.protect, auth.restrictTo('teacher'), auth.checkSubjectPermission, attendanceController.createAttendance);
 
 router
     .route('/:id')
@@ -34,7 +24,7 @@ router
 
 // Getting attendance of a student
 router.get(
-    '/attendance/student/:id',
+    '/student/:id',
 
     auth.protect,
     auth.checkStudentPermission,

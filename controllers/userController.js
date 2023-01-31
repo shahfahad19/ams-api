@@ -5,6 +5,8 @@ const validator = require('validator');
 const sendEmail = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
+const firebase = require('firebase-admin');
+const sharp = require('sharp');
 
 exports.getUser = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user._id);
@@ -17,7 +19,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
 });
 
 exports.getConfirmationToken = catchAsync(async (req, res, next) => {
-    const admin = await User.findById(req.admin._id);
+    const admin = await User.findById(req.user._id);
     if (admin.confirmed === true) return next(new AppError('Account already confirmed', 409));
     const token = admin.createConfirmationToken();
     let link = process.env.HOME_URL + '/admin/confirmAccount/' + token;
@@ -38,6 +40,28 @@ exports.getConfirmationToken = catchAsync(async (req, res, next) => {
         });
     } catch (err) {
         console.log(err);
+        return next(new AppError('There was an error sending the email. Try again later!'), 500);
+    }
+});
+
+exports.getCode = catchAsync(async (req, res, next) => {
+    const admin = await User.findById(req.body.email);
+    if (admin) return next(new AppError('An account with this email already exists', 400));
+    const confirmationCode = crypto.randomBytes(2).toString('hex').toUpperCase();
+    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${confirmationCode}`;
+    try {
+        await admin.save({ validateBeforeSave: false });
+        await sendEmail({
+            email: admin.email,
+            subject: 'Confirm your account',
+            message,
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Confirmation link sent to email!',
+        });
+    } catch (err) {
         return next(new AppError('There was an error sending the email. Try again later!'), 500);
     }
 });
@@ -88,7 +112,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         return next(new AppError('This route is not for password updates.', 400));
     }
     // 3) Update user document
-    const updatedUser = await User.findById(req.admin._id);
+    const updatedUser = await User.findById(req.user._id);
 
     if (req.body.email) {
         if (!validator.isEmail(req.body.email)) return next(new AppError('Email is invalid'), 400);
@@ -107,6 +131,64 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         status: 'success',
         data: {
             user: updatedUser,
+        },
+    });
+});
+
+// exports.updateImage = catchAsync(async (req, res, next) => {
+//     const file = req.file;
+//     firebase.initializeApp({
+//         apiKey: 'AIzaSyBGQErpxps_ZpBF20BVKgEmv8TGglLOnz4',
+//         authDomain: 'ams-fyp.firebaseapp.com',
+//         projectId: 'ams-fyp',
+//         storageBucket: 'ams-fyp.appspot.com',
+//         messagingSenderId: '860007240274',
+//         appId: '1:860007240274:web:5ba16ab26f88e6aa8fc58b',
+//         measurementId: 'G-62X1PX4LKP',
+//     });
+//     const bucket = firebase.storage().bucket();
+//     const fileName = file.originalname;
+//     const fileUpload = bucket.file(fileName);
+//     const blobStream = fileUpload.createWriteStream({
+//         metadata: {
+//             contentType: file.mimetype,
+//         },
+//     });
+
+//     const image = sharp(file.buffer);
+//     const resizedImage = await image
+//         .resize(250, 250, {
+//             fit: 'cover',
+//             position: 'center',
+//         })
+//         .toBuffer();
+
+//     blobStream.on('error', (err) => {
+//         console.error(err);
+//         res.status(500).send('Error uploading image');
+//     });
+
+//     blobStream.on('finish', async () => {
+//         const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileUpload.name}?alt=media`;
+//         res.send({ imageUrl });
+//     });
+
+//     blobStream.end(resizedImage);
+// });
+
+exports.updateImage = catchAsync(async (req, res, next) => {
+    if (!req.file) return next(new AppError('Image not found', 400));
+    const user = await User.findById(req.user._id);
+    if (!user.confirmed) return next(new AppError('Please confirm your account first!', 403));
+    user.photo = req.file.path;
+    user.photoUpdatedAt = Date.now();
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Image updated successfully',
+        data: {
+            user,
         },
     });
 });

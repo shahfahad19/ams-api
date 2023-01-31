@@ -3,7 +3,13 @@ const Semester = require('./../models/semesterModel');
 const APIFeatures = require('./../utils/apiFeatures');
 
 exports.getAllSemesters = catchAsync(async (req, res) => {
-    const features = new APIFeatures(Semester.find({ batch: req.params.id }), req.query)
+    if (!req.query.batch) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Batch Id should be provided',
+        });
+    }
+    const features = new APIFeatures(Semester.find({ batch: req.query.batch }), req.query)
         .filter()
         .sort()
         .limit()
@@ -13,7 +19,7 @@ exports.getAllSemesters = catchAsync(async (req, res) => {
     // let semesterArray = [];
 
     // semesters.forEach((semester, i) => {
-    //     if (semester.batch.admin.equals(req.admin._id))
+    //     if (semester.batch.admin.equals(req.user._id))
     //         semesterArray[i] = {
     //             _id: semester._id,
     //             name: semester.name,
@@ -44,10 +50,15 @@ exports.getSemester = catchAsync(async (req, res) => {
 });
 
 exports.createSemester = catchAsync(async (req, res) => {
-    console.log(req.params);
+    if (!req.query.batch) {
+        res.status(400).json({
+            status: 'error',
+            error: 'Batch Id should be provided',
+        });
+    }
     const newSemester = await Semester.create({
         name: req.body.name,
-        batch: req.params.id,
+        batch: req.query.batch,
         createdAt: Date.now(),
     });
     res.status(201).json({

@@ -63,6 +63,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         select: false,
     },
+    photoUpdatedAt: {
+        type: Date,
+        select: false,
+    },
     createdAt: {
         type: Date,
         select: false,
