@@ -5,8 +5,6 @@ const validator = require('validator');
 const sendEmail = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
-const firebase = require('firebase-admin');
-const sharp = require('sharp');
 
 exports.getUser = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user._id);
@@ -177,6 +175,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 // });
 
 exports.updateImage = catchAsync(async (req, res, next) => {
+    console.log(req.file);
     if (!req.file) return next(new AppError('Image not found', 400));
     const user = await User.findById(req.user._id);
     if (!user.confirmed) return next(new AppError('Please confirm your account first!', 403));

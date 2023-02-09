@@ -33,7 +33,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Batch',
     },
-    photo: String,
+    photo: {
+        type: String,
+        default: 'https://res.cloudinary.com/dbph73rvi/image/upload/v1675170781/mdqcinla4xkogsatvbr3.jpg',
+    },
 
     password: {
         type: String,
