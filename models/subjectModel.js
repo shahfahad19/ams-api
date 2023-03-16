@@ -12,7 +12,7 @@ const subjectSchema = new mongoose.Schema({
     },
     teacher: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher',
+        ref: 'User',
     },
     archived: {
         type: Boolean,

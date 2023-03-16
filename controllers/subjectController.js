@@ -15,7 +15,7 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
         .limit()
         .paginate();
 
-    const subjects = await features.query;
+    const subjects = await features.query.populate('teacher');
 
     let subjectsArray = [];
 
@@ -86,7 +86,7 @@ exports.createSubject = catchAsync(async (req, res) => {
 exports.updateSubject = catchAsync(async (req, res) => {
     const subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
-    });
+    }).populate('teacher');
 
     res.status(200).json({
         status: 'success',
