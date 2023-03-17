@@ -32,7 +32,6 @@ const sendErrorProd = (err, res) => {
             status: err.status,
             message: err.message,
             stack: err.stack,
-
         });
 
         // Programming or other unknown error: don't leak error details
@@ -42,6 +41,7 @@ const sendErrorProd = (err, res) => {
             status: 'error',
             message: 'Something went wrong!',
             error: err.message,
+            stack: err.stack,
         });
     }
 };
