@@ -104,3 +104,22 @@ exports.deleteSubject = catchAsync(async (req, res) => {
         data: null,
     });
 });
+
+// getting teacher subjects
+exports.getTeacherSubjects = catchAsync(async (req, res) => {
+    const features = new APIFeatures(Subject.find({ teacher: req.user, archived: false }), req.query)
+        .filter()
+        .sort()
+        .limit()
+        .paginate();
+
+    const subjects = await features.query;
+
+    res.status(200).json({
+        status: 'success',
+        results: subjects.length,
+        data: {
+            subjects: subjects,
+        },
+    });
+});

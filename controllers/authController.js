@@ -48,6 +48,7 @@ exports.signup = catchAsync(async (req, res, next) => {
         role: req.body.role,
         department: undefined,
         rollNo: undefined,
+        registrationNo: undefined,
         batch: undefined,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
@@ -207,7 +208,6 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
         },
     });
     if (!subject) return next(new AppError('Subject Not Found', 404));
-    if (!subject.semester.batch.admin.equals(req.user._id)) return next(new AppError('Subject Not Found', 404));
     next();
 });
 

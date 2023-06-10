@@ -17,17 +17,35 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'teacher', 'student'],
+        enum: ['super-admin', 'admin', 'teacher', 'student'],
         required: [true, 'User role must be defined'],
         lowercase: true,
     },
-    // Only for Admin
+
+    // Only for Admin and Teacher
     department: {
         type: String,
+        enum: ["Agriculture", "Computer Science", "Economics", "English", "Geology", "Management Sciences", "Microbiology", "Pharmacy", "Sociology", "Zoology", "PCRS", "Chemistry", "Physics", "Botany", "Biotechnology", "Law", "Education", "Environmental Sciences", "Geography", "Journalism & Mass Communication", "Library & Information Sciences", "Mathematics", "Pashto", "Political Science", "Psychology", "Tourism & Hotel Management", "Urdu", "Islamic & Arabic Studies",],
     },
+
+    // Only for Teacher
+    gender: {
+        type: String,
+        enum: ['male', 'female'],
+        lowercase: true,
+    },
+
+    designation: {
+        type: String,
+        enum: ['Lecturer', 'Assistant Professor', 'Associate Professor'],
+    },
+              
     // Only for Student
     rollNo: {
         type: Number,
+    },
+    registrationNo: {
+        type: String,
     },
     batch: {
         type: mongoose.Schema.Types.ObjectId,
@@ -38,6 +56,7 @@ const userSchema = new mongoose.Schema({
         default: 'https://res.cloudinary.com/dbph73rvi/image/upload/v1675170781/mdqcinla4xkogsatvbr3.jpg',
     },
 
+    // For All users
     password: {
         type: String,
         required: [true, 'Please provide a password'],
