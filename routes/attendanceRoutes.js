@@ -10,7 +10,7 @@ const router = express.Router();
 router
     .route('/')
     .get(auth.protect, auth.checkSubjectPermission, attendanceController.getSubjectAttendance)
-    .post(auth.protect, auth.restrictTo('teacher'), auth.checkSubjectPermission, attendanceController.createAttendance);
+    .post(auth.protect, auth.restrictTo('teacher'), auth.checkSubjectTeacher, attendanceController.createAttendance);
 
 router
     .route('/:id')
@@ -27,7 +27,6 @@ router.get(
     '/student/:id',
 
     auth.protect,
-    auth.checkStudentPermission,
     attendanceController.getStudentAttendance
 );
 

@@ -31,24 +31,24 @@ const attendanceSchema = new mongoose.Schema(
     }
 );
 
-attendanceSchema.virtual('subject_Id').get(function () {
-    return this.subjectId._id;
-});
-attendanceSchema.virtual('subjectName').get(function () {
-    return this.subjectId.name;
-});
-attendanceSchema.virtual('semesterId').get(function () {
-    return this.subjectId.semester._id;
-});
-attendanceSchema.virtual('semesterName').get(function () {
-    return this.subjectId.semester.name;
-});
-attendanceSchema.virtual('teacherId').get(function () {
-    return this.subjectId.teacher._id;
-});
-attendanceSchema.virtual('teacherName').get(function () {
-    return this.subjectId.teacher.name;
-});
+// attendanceSchema.virtual('subjectId').get(function () {
+//     return this.subject._id;
+// });
+// attendanceSchema.virtual('subjectName').get(function () {
+//     return this.subject.name;
+// });
+// attendanceSchema.virtual('semesterId').get(function () {
+//     return this.subject.semester._id;
+// });
+// attendanceSchema.virtual('semesterName').get(function () {
+//     return this.subject.semester.name;
+// });
+// attendanceSchema.virtual('teacherId').get(function () {
+//     return this.subject.teacher._id;
+// });
+// attendanceSchema.virtual('teacherName').get(function () {
+//     return this.subject.teacher.name;
+// });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 

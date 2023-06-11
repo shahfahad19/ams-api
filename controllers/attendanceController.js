@@ -72,31 +72,12 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
             error: 'Subject Id should be provided',
         });
     }
-    const subject = req.query.subject;
+    const subject = mongoose.Types.ObjectId(req.query.subject);
+
     const attendances = await Attendance.aggregate([
         {
-            $lookup: {
-                from: 'subjects',
-                localField: 'subject',
-                foreignField: '_id',
-                as: 'subject',
-            },
-        },
-        {
-            $unwind: '$subject',
-        },
-        {
             $match: {
-                'subject._id': subject,
-            },
-        },
-        {
-            $project: {
-                _id: '$_id',
-                date: '$date',
-                subject: '$subject',
-                students: '$students',
-                attendances: '$attendances',
+                subject: subject,
             },
         },
         {
@@ -104,7 +85,185 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
                 date: 1,
             },
         },
+        {
+            $unwind: '$attendances',
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'attendances.student',
+                foreignField: '_id',
+                as: 'student',
+            },
+        },
+        {
+            $group: {
+                _id: '$student._id',
+                name: { $first: '$student.name' },
+                rollNo: { $first: '$student.rollNo' },
+                dates: { $push: '$date' },
+                attendance: { $push: '$attendances' },
+            },
+        },
+        {
+            $unwind: '$_id',
+        },
+        {
+            $unwind: '$name',
+        },
+        {
+            $unwind: '$rollNo',
+        },
+        {
+            $sort: {
+                rollNo: 1,
+            },
+        },
+        {
+            $unset: 'attendance.student',
+        },
+        {
+            $unset: 'attendance._id',
+        },
+        {
+            $project: {
+                rollNo: '$rollNo',
+                name: '$name',
+                dates: '$dates',
+                percentage: {
+                    $concat: [
+                        {
+                            $convert: {
+                                input: {
+                                    $multiply: [
+                                        {
+                                            $divide: [
+                                                {
+                                                    $size: {
+                                                        $filter: {
+                                                            input: '$attendance',
+                                                            cond: {
+                                                                $eq: ['$$this.status', 'present'],
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    $size: '$attendance',
+                                                },
+                                            ],
+                                        },
+                                        100,
+                                    ],
+                                },
+                                to: 'string',
+                            },
+                        },
+                        '%',
+                    ],
+                },
+                attendance: '$attendance',
+            },
+        },
     ]);
+
+    // const attendances = await Attendance.aggregate([
+    //     {
+    //         $match: {
+    //             subject: subject,
+    //         },
+    //     },
+    //     {
+    //         $sort: {
+    //             date: 1,
+    //         },
+    //     },
+    //     {
+    //         $unwind: '$attendances',
+    //     },
+    //     {
+    //         $lookup: {
+    //             from: 'users',
+    //             localField: 'attendances.student',
+    //             foreignField: '_id',
+    //             as: 'student',
+    //         },
+    //     },
+    //     {
+    //         $group: {
+    //             _id: '$student._id',
+    //             name: { $first: '$student.name' },
+    //             rollNo: { $first: '$student.rollNo' },
+    //             dates: { $push: '$date' },
+    //             attendance: { $push: '$attendances' },
+    //             presentCount: {
+    //                 $sum: {
+    //                     $cond: { if: { $eq: ['$attendances.status', 'present'] }, then: 1, else: 0 },
+    //                 },
+    //             },
+    //             absentCount: {
+    //                 $sum: {
+    //                     $cond: { if: { $eq: ['$attendances.status', 'absent'] }, then: 1, else: 0 },
+    //                 },
+    //             },
+    //             leaveCount: {
+    //                 $sum: {
+    //                     $cond: { if: { $eq: ['$attendances.status', 'leave'] }, then: 1, else: 0 },
+    //                 },
+    //             },
+    //         },
+    //     },
+    //     {
+    //         $unwind: '$_id',
+    //     },
+    //     {
+    //         $unwind: '$name',
+    //     },
+    //     {
+    //         $unwind: '$rollNo',
+    //     },
+    //     {
+    //         $sort: {
+    //             rollNo: 1,
+    //         },
+    //     },
+    //     {
+    //         $unset: 'attendance.student',
+    //     },
+    //     {
+    //         $unset: 'attendance._id',
+    //     },
+    //     {
+    //         $project: {
+    //             rollNo: '$rollNo',
+    //             name: '$name',
+    //             dates: '$dates',
+    //             presentCount: '$presentCount',
+    //             absentCount: '$absentCount',
+    //             leaveCount: '$leaveCount',
+    //             percentage: {
+    //                 $concat: [
+    //                     {
+    //                         $convert: {
+    //                             input: {
+    //                                 $multiply: [
+    //                                     {
+    //                                         $divide: ['$presentCount', { $size: '$attendance' }],
+    //                                     },
+    //                                     100,
+    //                                 ],
+    //                             },
+    //                             to: 'string',
+    //                         },
+    //                     },
+    //                     '%',
+    //                 ],
+    //             },
+    //             attendance: '$attendance',
+    //         },
+    //     },
+    // ]);
+
     res.status(200).json({
         status: 'success',
         results: attendances.length,
@@ -133,7 +292,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 //         },
 //         {
 //             $lookup: {
-//                 from: 'students',
+//                 from: 'users',
 //                 localField: 'attendances.student',
 //                 foreignField: '_id',
 //                 as: 'student',
@@ -241,7 +400,8 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 // Get Student Attendance
 
 exports.getStudentAttendance = catchAsync(async (req, res) => {
-    const student = req.params.studentId;
+    const student = mongoose.Types.ObjectId(req.params.id);
+    console.log(student);
     const stdatt = await Attendance.aggregate([
         {
             $match: {
@@ -274,7 +434,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         },
         {
             $lookup: {
-                from: 'teachers',
+                from: 'users',
                 localField: 'subject.teacher',
                 foreignField: '_id',
                 as: 'teacher',
@@ -300,7 +460,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         },
         {
             $lookup: {
-                from: 'students',
+                from: 'users',
                 localField: 'attendances.student',
                 foreignField: '_id',
                 as: 'studentData',
@@ -412,19 +572,12 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
 
 // create attendance
 exports.createAttendance = catchAsync(async (req, res) => {
-    const newAttendance = await Attendance.create(req.body)
-        .populate({
-            path: 'subject',
-            populate: {
-                path: 'teacher',
-            },
-        })
-        .populate({
-            path: 'subject',
-            populate: {
-                path: 'semester',
-            },
-        });
+    const attendance = {
+        date: Date.now(),
+        subject: req.body.subject,
+        attendances: req.body.attendance,
+    };
+    const newAttendance = await Attendance.create(attendance);
     res.status(201).json({
         status: 'success',
         data: {

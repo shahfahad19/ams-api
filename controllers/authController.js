@@ -211,6 +211,18 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
     next();
 });
 
+exports.checkSubjectTeacher = catchAsync(async (req, res, next) => {
+    const subjectId = req.body.subject;
+
+    const subject = await Subject.findById(subjectId);
+    console.log(req.user._id);
+    console.log(subject.teacher);
+    if (!subject) return next(new AppError('Subject Not Found', 404));
+    if (!subject.teacher.equals(req.user._id))
+        return next(new AppError('You are not authorized to take attendance for this subject', 403));
+    next();
+});
+
 exports.checkStudentPermission = catchAsync(async (req, res, next) => {
     const studentId = req.params.id || req.query.student;
     const student = await User.findOne({ role: 'student', _id: studentId }).populate({

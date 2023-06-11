@@ -6,12 +6,6 @@ const auth = require('../controllers/authController');
 const router = express.Router();
 router.get('/teachers', auth.protect, auth.restrictTo('admin'), teacherController.getAllTeachers);
 
-router.get(
-    '/students',
-    auth.protect,
-    auth.restrictTo('admin', 'teacher'),
-    auth.checkBatchPermission,
-    studentController.getAllStudents
-);
+router.get('/students', auth.protect, auth.restrictTo('admin', 'teacher'), studentController.getAllStudents);
 
 module.exports = router;

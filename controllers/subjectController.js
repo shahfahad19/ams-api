@@ -113,13 +113,32 @@ exports.getTeacherSubjects = catchAsync(async (req, res) => {
         .limit()
         .paginate();
 
-    const subjects = await features.query;
+    const subjects = await features.query.populate({
+        path: 'semester',
+        populate: {
+            path: 'batch',
+            populate: 'admin',
+        },
+    });
+
+    const subjectsArr = [];
+
+    subjects.forEach((subject) => {
+        subjectsArr.push({
+            _id: subject._id,
+            name: subject.name,
+            semesterName: subject.semester.name,
+            batchId: subject.semester.batch._id,
+            batchName: subject.semester.batch.name,
+            department: subject.semester.batch.admin.department,
+        });
+    });
 
     res.status(200).json({
         status: 'success',
         results: subjects.length,
         data: {
-            subjects: subjects,
+            subjects: subjectsArr,
         },
     });
 });

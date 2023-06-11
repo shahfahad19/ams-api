@@ -8,7 +8,7 @@ const batchSchema = new mongoose.Schema(
         },
         admin: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Admin',
+            ref: 'User',
             required: [true, 'A batch must have an admin id.'],
         },
         batchCode: {
