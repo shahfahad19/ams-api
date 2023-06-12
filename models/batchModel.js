@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const batchSchema = new mongoose.Schema(
     {
         name: {
-            type: String,
+            type: Number,
+            min: 1,
             required: [true, 'Batch name is missing'],
         },
         admin: {

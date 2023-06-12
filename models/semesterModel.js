@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const semesterSchema = new mongoose.Schema(
     {
         name: {
-            type: String,
+            type: Number,
+            min: 1,
+            max: 8,
             required: [true, 'Semester name is missing'],
         },
         batch: {

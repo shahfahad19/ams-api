@@ -21,6 +21,16 @@ router
     .route('/get/teacher-subjects')
     .get(auth.protect, auth.restrictTo('teacher'), subjectController.getTeacherSubjects);
 
+// function where teacher remove subject from his list
+router.patch(
+    '/remove/teacher-subjects/:id',
+    auth.protect,
+    auth.restrictTo('teacher'),
+    auth.checkSubjectTeacher,
+    subjectController.removeSubjectFromTeacher,
+    subjectController.updateSubject
+);
+
 // Subject CRUD functions
 router
     .route('/:id')

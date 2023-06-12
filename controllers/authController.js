@@ -55,6 +55,10 @@ exports.signup = catchAsync(async (req, res, next) => {
         createdAt: Date.now(),
     };
 
+    if (req.body.role === 'super-admin') {
+        return next(new AppError('You cannot signup with this role'));
+    }
+
     // CUSTOM VALIDATION
     if (req.body.role === 'admin') {
         if (req.body.department === undefined) return next(new AppError('Please provide a department name.'), 400);
@@ -212,11 +216,9 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkSubjectTeacher = catchAsync(async (req, res, next) => {
-    const subjectId = req.body.subject;
+    const subjectId = req.body.subject || req.params.id;
 
     const subject = await Subject.findById(subjectId);
-    console.log(req.user._id);
-    console.log(subject.teacher);
     if (!subject) return next(new AppError('Subject Not Found', 404));
     if (!subject.teacher.equals(req.user._id))
         return next(new AppError('You are not authorized to take attendance for this subject', 403));

@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please tell us your name!'],
+        validate: {
+            validator: function (value) {
+                return validator.isAlpha(value);
+            },
+            message: 'Only alphabets are allowed.',
+        },
     },
     email: {
         type: String,
@@ -25,7 +31,37 @@ const userSchema = new mongoose.Schema({
     // Only for Admin and Teacher
     department: {
         type: String,
-        enum: ["Agriculture", "Computer Science", "Economics", "English", "Geology", "Management Sciences", "Microbiology", "Pharmacy", "Sociology", "Zoology", "PCRS", "Chemistry", "Physics", "Botany", "Biotechnology", "Law", "Education", "Environmental Sciences", "Geography", "Journalism & Mass Communication", "Library & Information Sciences", "Mathematics", "Pashto", "Political Science", "Psychology", "Tourism & Hotel Management", "Urdu", "Islamic & Arabic Studies",],
+        unique: true,
+        enum: [
+            'Agriculture',
+            'Computer Science',
+            'Economics',
+            'English',
+            'Geology',
+            'Management Sciences',
+            'Microbiology',
+            'Pharmacy',
+            'Sociology',
+            'Zoology',
+            'PCRS',
+            'Chemistry',
+            'Physics',
+            'Botany',
+            'Biotechnology',
+            'Law',
+            'Education',
+            'Environmental Sciences',
+            'Geography',
+            'Journalism & Mass Communication',
+            'Library & Information Sciences',
+            'Mathematics',
+            'Pashto',
+            'Political Science',
+            'Psychology',
+            'Tourism & Hotel Management',
+            'Urdu',
+            'Islamic & Arabic Studies',
+        ],
     },
 
     // Only for Teacher
@@ -39,10 +75,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['Lecturer', 'Assistant Professor', 'Associate Professor'],
     },
-              
+
     // Only for Student
     rollNo: {
         type: Number,
+        min: 1,
     },
     registrationNo: {
         type: String,
@@ -84,6 +121,10 @@ const userSchema = new mongoose.Schema({
     confirmationToken: {
         type: String,
         select: false,
+    },
+    approved: {
+        type: Boolean,
+        default: false,
     },
     photoUpdatedAt: {
         type: Date,
