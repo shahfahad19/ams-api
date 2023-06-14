@@ -11,7 +11,7 @@ const semesterSchema = new mongoose.Schema(
         batch: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Batch',
-            required: [true, 'A semester must have an batch id.'],
+            required: [true, 'A semester must have a batch id.'],
         },
         archived: {
             type: Boolean,
@@ -40,6 +40,24 @@ semesterSchema.index(
 semesterSchema.virtual('admin').get(function () {
     return this.batch.admin;
 });
+
+// Method to archive semester and subjects
+semesterSchema.methods.archiveSemester = async function () {
+    const semesterId = this._id;
+
+    try {
+        // Archive the semester
+        this.archived = true;
+        await this.save();
+
+        // Archive related subjects
+        await mongoose.model('Subject').updateMany({ semesterId }, { archived: true });
+
+        console.log('Semester archived successfully.');
+    } catch (err) {
+        console.error('Error archiving semester:', err);
+    }
+};
 
 const Semester = mongoose.model('Semester', semesterSchema);
 

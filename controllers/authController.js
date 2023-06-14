@@ -304,6 +304,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     user.passwordConfirm = req.body.passwordConfirm;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
+
     await user.save();
 
     // 3) Update changedPasswordAt property for the user
@@ -323,6 +324,8 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     // 3) If so, update password
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
+    if (user.role === 'admin' && user.approved === false) user.approved = true;
+
     await user.save();
     // User.findByIdAndUpdate will NOT work as intended!
 

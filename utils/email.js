@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendEmail = async (options) => {
+exports.sendEmail = async (options) => {
     // 1) Create a transporter
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
@@ -41,10 +41,11 @@ exports.sendEmailToDepartment = async (options) => {
         from: 'Attendane Managment System',
         to: options.email,
         subject: 'You have been added as a Department Admin in AMS',
-        text: `Login using credentials
-        Email: ${options.email}
-        Password: ${options.password}
-        if you think you received this email by mistake, contact: attendancesystemuos@gmail.com`,
+        text: `You have been added by AMS administrator to manage ${options.department} department.
+To activate your account, login at https://amsapp.vercel.app using following credentials
+Email: ${options.email}
+Password: ${options.password}
+If you think you received this email by mistake, contact: attendancesystemuos@gmail.com`,
         html: `<!DOCTYPE html>
     <html>
     <head>
@@ -168,9 +169,14 @@ exports.sendEmailToDepartment = async (options) => {
                 <td align="left" bgcolor="#ffffff" style="padding: 24px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
                   <p style="margin: 0;">Salam!</p>
                   <p style="margin: 0;">You have been added by AMS administrator to manage department of ${options.department}</p>
+                  <hr/>
+                  
                   <p style="margin: 0;">Here are your login credentials</p>
-                  <code style="margin: 0;">Email: ${options.email}</code>
-                  <code style="margin: 0;">Password: ${options.password}</code>
+                  <div style="margin: 0;"v><span>Email: </span><code>${options.email}</code></div>
+                  <div style="margin: 0;"v><span>Password: </span><code>${options.password}</code></div>
+
+                  <p style="margin: 0;">To go to login page <a href='https://amsapp.vercel.app/login'>click here</a></p>
+
 
                 </td>
               </tr>
@@ -206,8 +212,6 @@ exports.sendEmailToDepartment = async (options) => {
     </html>`,
         // html:
     };
-
-    // 3) Actually send the email
     await transporter.sendMail(mailOptions);
 };
 
@@ -400,5 +404,3 @@ const emailMessage = (name, link, deleteLink) => {
     </body>
     </html>`;
 };
-
-module.exports = sendEmail;

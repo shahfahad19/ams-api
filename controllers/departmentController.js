@@ -19,7 +19,7 @@ exports.getAllDepartments = catchAsync(async (req, res) => {
     });
 });
 
-exports.createDepartment = catchAsync(async (req, res) => {
+exports.createDepartment = catchAsync(async (req, res, next) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let rndPass = '';
 
@@ -27,9 +27,8 @@ exports.createDepartment = catchAsync(async (req, res) => {
         const randomIndex = Math.floor(Math.random() * characters.length);
         rndPass += characters.charAt(randomIndex);
     }
-
     const userData = {
-        name: req.body.name,
+        name: 'Not Set Yet',
         email: req.body.email,
         role: 'admin',
         department: req.body.department,
@@ -45,15 +44,29 @@ exports.createDepartment = catchAsync(async (req, res) => {
     // SENDING EMAIL
     try {
         await sendEmailToDepartment({
-            email: user.email,
-            subject: 'Confirm your account',
-            name: user.name,
-            links: {
-                email: req.body.email,
-                department: req.body.department,
-                password: req.body.password,
-            },
+            email: req.body.email,
+            subject: 'Approve your account at AMS',
+            department: req.body.department,
+            password: rndPass,
         });
-    } catch (err) {}
+    } catch (err) {
+        console.log(err);
+    }
+    user.confirmed = true;
     await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Department added successfully!',
+    });
+});
+
+exports.getDepartment = catchAsync(async (req, res) => {
+    const department = await User.findById(req.params.id);
+    res.status(200).json({
+        status: 'success',
+        data: {
+            department,
+        },
+    });
 });

@@ -7,6 +7,8 @@ const auth = require('../controllers/authController');
 
 const router = express.Router();
 
+router.route('/department/:id').get(auth.protect, auth.restrictTo('super-admin'), departmentController.getDepartment);
+
 router
     .route('/departments')
     .get(auth.protect, auth.restrictTo('super-admin'), departmentController.getAllDepartments)

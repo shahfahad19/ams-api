@@ -9,9 +9,9 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please tell us your name!'],
         validate: {
             validator: function (value) {
-                return validator.isAlpha(value);
+                return validator.matches(value, /^[a-zA-Z\s]+$/);
             },
-            message: 'Only alphabets are allowed.',
+            message: 'Invalid name. Only alphabets and spaces are allowed.',
         },
     },
     email: {
@@ -31,7 +31,6 @@ const userSchema = new mongoose.Schema({
     // Only for Admin and Teacher
     department: {
         type: String,
-        unique: true,
         enum: [
             'Agriculture',
             'Computer Science',
@@ -62,6 +61,7 @@ const userSchema = new mongoose.Schema({
             'Urdu',
             'Islamic & Arabic Studies',
         ],
+        unique: true,
     },
 
     // Only for Teacher
