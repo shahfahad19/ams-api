@@ -14,7 +14,12 @@ router
     .get(auth.protect, auth.restrictTo('super-admin'), departmentController.getAllDepartments)
     .post(auth.protect, auth.restrictTo('super-admin'), departmentController.createDepartment);
 
-router.get('/teachers', auth.protect, auth.restrictTo('admin'), teacherController.getAllTeachers);
+router
+    .route('/teachers')
+    .get(auth.protect, teacherController.getDepartmentTeachers)
+    .post(auth.protect, auth.restrictTo('admin'), teacherController.addTeacher);
+
+router.get('/teachersByDepartments', teacherController.getTeachersByDepartments);
 
 router.get('/students', auth.protect, auth.restrictTo('admin', 'teacher'), studentController.getAllStudents);
 

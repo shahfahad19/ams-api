@@ -62,6 +62,7 @@ const userSchema = new mongoose.Schema({
             'Islamic & Arabic Studies',
         ],
         unique: true,
+        sparse: true,
     },
 
     // Only for Teacher
@@ -74,6 +75,11 @@ const userSchema = new mongoose.Schema({
     designation: {
         type: String,
         enum: ['Lecturer', 'Assistant Professor', 'Associate Professor'],
+    },
+
+    departmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
 
     // Only for Student
@@ -135,6 +141,7 @@ const userSchema = new mongoose.Schema({
         select: false,
     },
 });
+userSchema.index({ department: 1 }, { partialFilterExpression: { role: 'admin' }, unique: true, sparse: true });
 
 userSchema.pre('save', async function (next) {
     // Only run this function if password was actually modified
