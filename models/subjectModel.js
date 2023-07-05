@@ -14,6 +14,10 @@ const subjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    creditHours: {
+        type: Number,
+        required: [true, 'Credit hours are missing'],
+    },
     archived: {
         type: Boolean,
         default: false,

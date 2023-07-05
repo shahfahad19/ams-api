@@ -89,29 +89,50 @@ exports.getTeachersByDepartments = catchAsync(async (req, res) => {
     const teachers = await User.aggregate([
         { $match: { role: 'teacher' } },
         {
+            $group: {
+                _id: '$departmentId',
+                teachers: { $push: '$$ROOT' },
+            },
+        },
+        {
             $lookup: {
-                from: 'users',
-                localField: 'departmentId',
+                from: 'users', // Replace 'users' with the actual collection name of the User model
+                localField: '_id',
                 foreignField: '_id',
                 as: 'department',
             },
         },
-        { $unwind: '$department' },
         {
-            $group: {
-                _id: null,
-                department: { $first: '$department.department' },
-                teachers: { $addToSet: '$$ROOT' },
+            $addFields: {
+                departmentName: { $arrayElemAt: ['$department.department', 0] },
             },
         },
+
         {
             $project: {
                 _id: 0,
+                department: 0,
                 'teachers.department': 0,
                 'teachers.password': 0,
+                'teachers.departmentId': 0,
                 'teachers.createdAt': 0,
             },
         },
+        // {
+        //     $group: {
+        //         _id: null,
+        //         department: { $first: '$department.department' },
+        //         teachers: { $addToSet: '$$ROOT' },
+        //     },
+        // },
+        // {
+        //     $project: {
+        //         _id: 0,
+        //         'teachers.department': 0,
+        //         'teachers.password': 0,
+        //         'teachers.createdAt': 0,
+        //     },
+        // },
     ]);
 
     // SEND RESPONSE

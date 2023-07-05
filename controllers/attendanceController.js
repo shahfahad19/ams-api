@@ -1,4 +1,6 @@
 const Attendance = require('./../models/attendanceModel');
+const Subject = require('./../models/subjectModel');
+
 const mongoose = require('mongoose');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
@@ -149,7 +151,19 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
                                                     },
                                                 },
                                                 {
-                                                    $size: '$attendance',
+                                                    $subtract: [
+                                                        { $size: '$attendance' },
+                                                        {
+                                                            $size: {
+                                                                $filter: {
+                                                                    input: '$attendance',
+                                                                    cond: {
+                                                                        $eq: ['$$this.status', 'leave'],
+                                                                    },
+                                                                },
+                                                            },
+                                                        },
+                                                    ],
                                                 },
                                             ],
                                         },
@@ -401,7 +415,6 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 
 exports.getStudentAttendance = catchAsync(async (req, res) => {
     const student = mongoose.Types.ObjectId(req.params.id);
-    console.log(student);
     const stdatt = await Attendance.aggregate([
         {
             $match: {
@@ -419,8 +432,12 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         {
             $group: {
                 _id: '$subject',
+
                 attendances: {
                     $push: '$attendances',
+                },
+                dates: {
+                    $push: '$date',
                 },
             },
         },
@@ -476,15 +493,11 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         // },
         {
             $project: {
-                student: '$studentData._id',
-                studentName: '$studentData.name',
-                studentRollNo: '$studentData.rollNo',
                 subject: '$_id',
                 subjectName: '$subject.name',
                 teacher: '$teacher._id',
                 teacherName: '$teacher.name',
                 semester: '$semester._id',
-                semesterName: '$semester.name',
                 totalClass: {
                     $size: '$attendances',
                 },
@@ -537,7 +550,19 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                                                     },
                                                 },
                                                 {
-                                                    $size: '$attendances',
+                                                    $subtract: [
+                                                        { $size: '$attendances' },
+                                                        {
+                                                            $size: {
+                                                                $filter: {
+                                                                    input: '$attendances',
+                                                                    cond: {
+                                                                        $eq: ['$$this.status', 'leave'],
+                                                                    },
+                                                                },
+                                                            },
+                                                        },
+                                                    ],
                                                 },
                                             ],
                                         },
@@ -551,6 +576,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                     ],
                 },
                 attendances: '$attendances',
+                dates: '$dates',
             },
         },
         {
@@ -562,6 +588,33 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
         {
             $unset: 'attendances._id',
         },
+        {
+            $group: {
+                _id: '$semester',
+                attendances: { $push: '$$ROOT' },
+            },
+        },
+        {
+            $unset: 'attendances.semester',
+        },
+        {
+            $lookup: {
+                from: 'semesters', // Assuming you have a "semesters" collection
+                localField: '_id',
+                foreignField: '_id',
+                as: 'semester',
+            },
+        },
+        {
+            $unwind: '$semester',
+        },
+        {
+            $project: {
+                semester: '$semester',
+                semesterName: '$semseter.name',
+                subjects: '$attendances',
+            },
+        },
     ]);
     res.send({
         status: 'success',
@@ -570,14 +623,65 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
     });
 });
 
-// create attendance
-exports.createAttendance = catchAsync(async (req, res) => {
+exports.createAttendance = catchAsync(async (req, res, next) => {
+    const subject = req.body.subject;
+
+    // Get the current date and time
+    const currentDate = new Date();
+
+    // Calculate the start and end dates of the current day
+    const firstDayOfCurrentWeek = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate() - currentDate.getDay()
+    );
+    const lastDayOfCurrentWeek = new Date(firstDayOfCurrentWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+
+    // Find the attendance records for the current date and subject
+    const existingAttendancesToday = await Attendance.find({
+        date: {
+            $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
+            $lt: new Date(currentDate.setHours(23, 59, 59, 999)),
+        },
+        subject: subject,
+    });
+
+    // Find the attendance records for the current week and subject
+    const existingAttendancesThisWeek = await Attendance.find({
+        date: {
+            $gte: firstDayOfCurrentWeek,
+            $lte: lastDayOfCurrentWeek,
+        },
+        subject: subject,
+    });
+
+    // Get the subject's creditHours
+    const subjectData = await Subject.findById(subject);
+
+    const creditHours = subjectData.creditHours;
+
+    // Check if the attendance limits have been reached
+    if (existingAttendancesThisWeek.length >= creditHours) {
+        return next(
+            new AppError(
+                `Attendance limit reached for this week. Only ${creditHours} attendances are allowed for this subject per week.`
+            ),
+            400
+        );
+    }
+
+    if (existingAttendancesToday.length >= 2) {
+        return next(new AppError(`Attendance limit reached for today..`), 400);
+    }
+
+    // Create the attendance record
     const attendance = {
         date: Date.now(),
-        subject: req.body.subject,
+        subject: subject,
         attendances: req.body.attendance,
     };
     const newAttendance = await Attendance.create(attendance);
+
     res.status(201).json({
         status: 'success',
         data: {

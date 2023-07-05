@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const sendEmail = require('../utils/email');
+const { sendEmail } = require('../utils/email');
 const Batch = require('../models/batchModel');
 const Semester = require('../models/semesterModel');
 const Subject = require('../models/subjectModel');
@@ -45,48 +45,30 @@ exports.signup = catchAsync(async (req, res, next) => {
     const userData = {
         name: req.body.name,
         email: req.body.email,
-        role: req.body.role,
-        department: undefined,
-        rollNo: undefined,
-        registrationNo: undefined,
+        role: 'student',
+        rollNo: req.body.rollNo,
+        registrationNo: req.body.registrationNo,
         batch: undefined,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
         createdAt: Date.now(),
     };
 
-    if (req.body.role === 'super-admin') {
+    if (req.body.role !== 'student') {
         return next(new AppError('You cannot signup with this role'));
     }
 
-    // CUSTOM VALIDATION
-    if (req.body.role === 'admin') {
-        if (req.body.department === undefined) return next(new AppError('Please provide a department name.'), 400);
-        userData.department = req.body.department;
-        delete userData.rollNo;
-        delete userData.batch;
+    if (req.body.rollNo === undefined) return next(new AppError('Please provide a roll no.'), 400);
+    if (req.body.batchCode === undefined) return next(new AppError('Please provide a batch code.'), 400);
+    const batchCode = req.body.batchCode;
+    const batch = await Batch.findOne({ batchCode: batchCode }).select('_id');
+    if (!batch) {
+        return next(new AppError('Batch Code is Invalid'), 401);
     }
+    const student = await User.findOne({ role: 'student', batch: batch._id, rollNo: req.body.rollNo });
+    if (student) return next(new AppError('A student with this roll no already exists in this batch'));
+    userData.batch = batch._id;
 
-    if (req.body.role === 'student') {
-        if (req.body.rollNo === undefined) return next(new AppError('Please provide a roll no.'), 400);
-        if (req.body.batchCode === undefined) return next(new AppError('Please provide a batch code.'), 400);
-        const batchCode = req.body.batchCode;
-        const batch = await Batch.findOne({ batchCode: batchCode }).select('_id');
-        if (!batch) {
-            return next(new AppError('Batch Code is Invalid'), 401);
-        }
-        const student = await User.findOne({ role: 'student', batch: batch._id, rollNo: req.body.rollNo });
-        if (student) return next(new AppError('A student with this roll no already exists in this batch'));
-        userData.rollNo = req.body.rollNo;
-        userData.batch = batch._id;
-        delete userData.department;
-    }
-
-    if (req.body.role === 'teacher') {
-        delete userData.department;
-        delete userData.rollNo;
-        delete userData.batch;
-    }
     // CUSTOM VALIDATION ENDS
 
     const user = await User.create(userData);

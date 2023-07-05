@@ -46,7 +46,10 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
 
 exports.getSubject = catchAsync(async (req, res) => {
     const subject = await Subject.findById(req.params.id)
-        .populate('teacher')
+        .populate({
+            path: 'teacher',
+            populate: 'departmentId',
+        })
         .populate({
             path: 'semester',
             populate: {
@@ -73,6 +76,7 @@ exports.createSubject = catchAsync(async (req, res) => {
     const newSubject = await Subject.create({
         name: req.body.name,
         semester: req.query.semester,
+        creditHours: req.body.creditHours,
         createdAt: Date.now(),
     });
     res.status(201).json({
@@ -127,6 +131,7 @@ exports.getTeacherSubjects = catchAsync(async (req, res) => {
         subjectsArr.push({
             _id: subject._id,
             name: subject.name,
+            creditHours: subject.creditHours,
             semesterName: subject.semester.name,
             batchId: subject.semester.batch._id,
             batchName: subject.semester.batch.name,
