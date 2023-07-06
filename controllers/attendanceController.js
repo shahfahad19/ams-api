@@ -476,27 +476,12 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
             $unwind: '$semester',
         },
         {
-            $lookup: {
-                from: 'users',
-                localField: 'attendances.student',
-                foreignField: '_id',
-                as: 'studentData',
-            },
-        },
-        {
-            $unwind: '$studentData',
-        },
-        // {
-        //     $match: {
-        //         'semester._id': semester,
-        //     },
-        // },
-        {
             $project: {
                 subject: '$_id',
                 subjectName: '$subject.name',
                 teacher: '$teacher._id',
                 teacherName: '$teacher.name',
+                teacherEmail: req.user.role === 'student' ? null : '$teacher.email',
                 semester: '$semester._id',
                 totalClass: {
                     $size: '$attendances',
@@ -532,48 +517,43 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                     },
                 },
                 percentage: {
-                    $concat: [
-                        {
-                            $convert: {
-                                input: {
-                                    $multiply: [
+                    $convert: {
+                        input: {
+                            $multiply: [
+                                {
+                                    $divide: [
                                         {
-                                            $divide: [
+                                            $size: {
+                                                $filter: {
+                                                    input: '$attendances',
+                                                    cond: {
+                                                        $eq: ['$$this.status', 'present'],
+                                                    },
+                                                },
+                                            },
+                                        },
+                                        {
+                                            $subtract: [
+                                                { $size: '$attendances' },
                                                 {
                                                     $size: {
                                                         $filter: {
                                                             input: '$attendances',
                                                             cond: {
-                                                                $eq: ['$$this.status', 'present'],
+                                                                $eq: ['$$this.status', 'leave'],
                                                             },
                                                         },
                                                     },
                                                 },
-                                                {
-                                                    $subtract: [
-                                                        { $size: '$attendances' },
-                                                        {
-                                                            $size: {
-                                                                $filter: {
-                                                                    input: '$attendances',
-                                                                    cond: {
-                                                                        $eq: ['$$this.status', 'leave'],
-                                                                    },
-                                                                },
-                                                            },
-                                                        },
-                                                    ],
-                                                },
                                             ],
                                         },
-                                        100,
                                     ],
                                 },
-                                to: 'string',
-                            },
+                                100,
+                            ],
                         },
-                        '%',
-                    ],
+                        to: 'string',
+                    },
                 },
                 attendances: '$attendances',
                 dates: '$dates',
@@ -613,7 +593,25 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                 semester: '$semester',
                 semesterName: '$semseter.name',
                 subjects: '$attendances',
+                student: student,
             },
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'student',
+                foreignField: '_id',
+                as: 'studentData',
+            },
+        },
+        {
+            $unwind: '$studentData',
+        },
+        {
+            $unset: 'studentData.password',
+        },
+        {
+            $unset: 'studentData.confirmationToken',
         },
     ]);
     res.send({
@@ -674,9 +672,15 @@ exports.createAttendance = catchAsync(async (req, res, next) => {
         return next(new AppError(`Attendance limit reached for today..`), 400);
     }
 
+    let date = new Date();
+    let offset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+    date.setTime(date.getTime() + offset);
+
+    let formattedDate = date.toISOString().replace('Z', '+05:00');
+
     // Create the attendance record
     const attendance = {
-        date: Date.now(),
+        date: formattedDate,
         subject: subject,
         attendances: req.body.attendance,
     };
