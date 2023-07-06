@@ -21,6 +21,11 @@ router
 
 router.get('/teachersByDepartments', teacherController.getTeachersByDepartments);
 
-router.get('/students', auth.protect, auth.restrictTo('admin', 'teacher'), studentController.getAllStudents);
+router.get(
+    '/students',
+    auth.protect,
+    auth.restrictTo('admin', 'teacher', 'super-admin'),
+    studentController.getAllStudents
+);
 
 module.exports = router;

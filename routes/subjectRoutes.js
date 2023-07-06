@@ -8,12 +8,7 @@ const router = express.Router();
 // url = /subjects?semester=123456789
 router
     .route('/')
-    .get(
-        auth.protect,
-        auth.restrictTo('admin', 'teacher', 'student'),
-        auth.checkSemesterPermission,
-        subjectController.getAllSubjects
-    )
+    .get(auth.protect, subjectController.getAllSubjects)
     .post(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, subjectController.createSubject);
 
 // Get teacher subjects

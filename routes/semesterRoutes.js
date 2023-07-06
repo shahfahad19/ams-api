@@ -8,23 +8,13 @@ const router = express.Router();
 // url = /semesters?batch=123456789
 router
     .route('/')
-    .get(
-        auth.protect,
-        auth.restrictTo('admin', 'student'),
-        auth.checkBatchPermission,
-        semesterController.getAllSemesters
-    )
+    .get(auth.protect, semesterController.getAllSemesters)
     .post(auth.protect, auth.restrictTo('admin'), auth.checkBatchPermission, semesterController.createSemester);
 
 // Semester Crud functions
 router
     .route('/:id')
-    .get(
-        auth.protect,
-        auth.restrictTo('admin', 'student'),
-        auth.checkSemesterPermission,
-        semesterController.getSemester
-    )
+    .get(auth.protect, semesterController.getSemester)
     .patch(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, semesterController.updateSemester)
     .delete(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, semesterController.deleteSemester);
 

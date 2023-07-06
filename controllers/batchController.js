@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const Batch = require('./../models/batchModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const AppError = require('../utils/appError');
+const mongoose = require('mongoose');
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
@@ -14,17 +15,19 @@ const filterObj = (obj, ...allowedFields) => {
 
 exports.getAllBatches = catchAsync(async (req, res) => {
     let admin = req.user._id;
-    const features = new APIFeatures(
-        Batch.find({
-            admin,
-        }).select('-adminId'),
-        req.query
-    )
-        .filter()
-        .sort('archived', 'createdAt')
-        .limit('id', 'name', 'batchCode')
-        .paginate();
-    const batches = await features.query;
+
+    let paramsDept = req.query.dept;
+    if (paramsDept !== undefined) {
+        admin = paramsDept;
+    }
+    admin = mongoose.Types.ObjectId(admin);
+    const batches = await Batch.aggregate([
+        {
+            $match: {
+                admin: admin,
+            },
+        },
+    ]);
 
     // SEND RESPONSE
     res.status(200).json({
