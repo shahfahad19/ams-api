@@ -156,7 +156,7 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.pre('save', async function (next) {
-    // Only run this function if password was actually modified
+    // Only run this function if email was actually modified
     if (!this.isModified('email')) return next();
 
     // Delete passwordConfirm field

@@ -1,5 +1,6 @@
 const Attendance = require('./../models/attendanceModel');
 const Subject = require('./../models/subjectModel');
+const APIFeatures = require('./../utils/apiFeatures');
 
 const mongoose = require('mongoose');
 const catchAsync = require('./../utils/catchAsync');
@@ -74,7 +75,16 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
             error: 'Subject Id should be provided',
         });
     }
+
     const subject = mongoose.Types.ObjectId(req.query.subject);
+
+    const dates = [];
+    const features = new APIFeatures(Attendance.find(), { subject }).filter().sort('date').limit().paginate();
+    const attendanceCount = await features.query;
+
+    attendanceCount.map((attendance, index) => {
+        dates[index] = attendance.date;
+    });
 
     const attendances = await Attendance.aggregate([
         {
@@ -152,7 +162,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
                                                 },
                                                 {
                                                     $subtract: [
-                                                        { $size: '$attendance' },
+                                                        attendanceCount.length,
                                                         {
                                                             $size: {
                                                                 $filter: {
@@ -282,6 +292,8 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
         status: 'success',
         results: attendances.length,
         data: {
+            count: attendanceCount.length,
+            dates: dates,
             attendances,
         },
     });

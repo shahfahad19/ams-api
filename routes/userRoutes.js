@@ -10,6 +10,10 @@ const router = express.Router();
 router.route('/department/:id').get(auth.protect, auth.restrictTo('super-admin'), departmentController.getDepartment);
 
 router
+    .route('/department/:id/updateEmail')
+    .patch(auth.protect, auth.restrictTo('super-admin'), departmentController.updateEmail);
+
+router
     .route('/departments')
     .get(auth.protect, auth.restrictTo('super-admin'), departmentController.getAllDepartments)
     .post(auth.protect, auth.restrictTo('super-admin'), departmentController.createDepartment);

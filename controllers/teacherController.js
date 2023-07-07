@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('./../utils/apiFeatures');
 const { sendEmailToTeacher } = require('../utils/email');
+const mongoose = require('mongoose');
 
 exports.addTeacher = catchAsync(async (req, res) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -62,18 +63,14 @@ exports.getAllTeachers = catchAsync(async (req, res) => {
 });
 
 exports.getDepartmentTeachers = catchAsync(async (req, res) => {
-    let departmentId = req.user._id;
-    const features = new APIFeatures(
-        User.find({
-            departmentId,
-        }).select('-departmentId'),
-        req.query
-    )
-        .filter()
-        .sort()
-        .limit()
-        .paginate();
-    const teachers = await features.query;
+    let departmentId = req.user.role === 'admin' ? req.user._id : mongoose.Types.ObjectId(req.query.dept);
+    const teachers = await User.aggregate([
+        {
+            $match: {
+                departmentId,
+            },
+        },
+    ]);
 
     // SEND RESPONSE
     res.status(200).json({
