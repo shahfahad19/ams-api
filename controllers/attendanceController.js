@@ -478,8 +478,17 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                 as: 'semester',
             },
         },
+
         {
             $unwind: '$subject',
+        },
+        {
+            $lookup: {
+                from: 'attendances',
+                localField: 'subject._id',
+                foreignField: 'subject',
+                as: 'attendancesList',
+            },
         },
         {
             $unwind: '$teacher',
@@ -496,7 +505,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                 teacherEmail: req.user.role === 'student' ? null : '$teacher.email',
                 semester: '$semester._id',
                 totalClass: {
-                    $size: '$attendances',
+                    $size: '$attendancesList',
                 },
                 present: {
                     $size: {
@@ -546,7 +555,7 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                                         },
                                         {
                                             $subtract: [
-                                                { $size: '$attendances' },
+                                                { $size: '$attendancesList' },
                                                 {
                                                     $size: {
                                                         $filter: {

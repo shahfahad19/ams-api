@@ -1,3 +1,4 @@
+const DefaultSubject = require('../models/defaultSubjectModel');
 const catchAsync = require('../utils/catchAsync');
 const Subject = require('./../models/subjectModel');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -73,10 +74,12 @@ exports.createSubject = catchAsync(async (req, res) => {
             error: 'Semester Id should be provided',
         });
     }
+    const subject = await DefaultSubject.findById(req.body.subject);
+
     const newSubject = await Subject.create({
-        name: req.body.name,
+        name: subject.name,
         semester: req.query.semester,
-        creditHours: req.body.creditHours,
+        creditHours: subject.creditHours,
         createdAt: Date.now(),
     });
     res.status(201).json({
