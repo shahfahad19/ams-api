@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const Attendance = require('./attendanceModel');
+const AppError = require('../utils/appError');
 
 const subjectSchema = new mongoose.Schema({
     name: {
@@ -37,6 +39,19 @@ subjectSchema.index(
         unique: true,
     }
 );
+
+subjectSchema.pre('remove', async function (next) {
+    const subjectId = this._id;
+
+    try {
+        // Delete attendances with the subjectId
+        await Attendance.deleteMany({ subject: subjectId });
+
+        next();
+    } catch (error) {
+        return next(new AppError('Failed to delete attendances', 500));
+    }
+});
 
 const Subject = mongoose.model('Subject', subjectSchema);
 

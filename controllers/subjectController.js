@@ -1,4 +1,6 @@
+const Attendance = require('../models/attendanceModel');
 const DefaultSubject = require('../models/defaultSubjectModel');
+const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Subject = require('./../models/subjectModel');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -67,7 +69,7 @@ exports.getSubject = catchAsync(async (req, res) => {
     });
 });
 
-exports.createSubject = catchAsync(async (req, res) => {
+exports.createSubject = catchAsync(async (req, res, next) => {
     if (!req.query.semester) {
         res.status(400).json({
             status: 'error',
@@ -76,10 +78,16 @@ exports.createSubject = catchAsync(async (req, res) => {
     }
     const subject = await DefaultSubject.findById(req.body.subject);
 
+    if (!subject) {
+        return next(new AppError('Subject does not exist', 404));
+    }
+
     const newSubject = await Subject.create({
         name: subject.name,
         semester: req.query.semester,
         creditHours: subject.creditHours,
+        teacher: null,
+        archived: false,
         createdAt: Date.now(),
     });
     res.status(201).json({
@@ -91,9 +99,16 @@ exports.createSubject = catchAsync(async (req, res) => {
 });
 
 exports.updateSubject = catchAsync(async (req, res) => {
-    const subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-    }).populate('teacher');
+    const subject = await Subject.findByIdAndUpdate(
+        req.params.id,
+        {
+            archived: req.body.archived,
+            teacher: req.body.teacher,
+        },
+        {
+            new: true,
+        }
+    ).populate('teacher');
 
     res.status(200).json({
         status: 'success',
@@ -103,8 +118,19 @@ exports.updateSubject = catchAsync(async (req, res) => {
     });
 });
 
-exports.deleteSubject = catchAsync(async (req, res) => {
-    await Subject.findByIdAndDelete(req.params.id);
+exports.deleteSubject = catchAsync(async (req, res, next) => {
+    const subjectId = req.params.id;
+
+    // Find the subject document
+    const subject = await Subject.findById(subjectId);
+
+    if (!subject) {
+        // Subject not found
+        return next(new AppError('Subject not found', 404));
+    }
+
+    await Attendance.deleteMany({ subject: subjectId });
+    await Subject.findByIdAndDelete(subjectId);
 
     res.status(204).json({
         status: 'success',
@@ -127,6 +153,7 @@ exports.getTeacherSubjects = catchAsync(async (req, res) => {
             populate: 'admin',
         },
     });
+    console.log(subjects);
 
     const subjectsArr = [];
 

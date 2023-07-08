@@ -4,6 +4,10 @@ const Batch = require('./../models/batchModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const mongoose = require('mongoose');
+const Semester = require('../models/semesterModel');
+const Attendance = require('../models/attendanceModel');
+const Subject = require('../models/subjectModel');
+const User = require('../models/userModel');
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
@@ -98,7 +102,40 @@ exports.updateBatchCode = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteBatch = catchAsync(async (req, res, next) => {
-    await Batch.findByIdAndDelete(req.params.id);
+    const batchId = req.params.id;
+
+    // Find the batch document
+    const batch = await Batch.findById(batchId);
+
+    if (!batch) {
+        // Batch not found
+        return next(new AppError('Batch not found', 404));
+    }
+
+    // Find all semesters with the batchId
+    const semesters = await Semester.find({ batch: batchId });
+
+    // Delete semesters, subjects, and attendances
+    await Promise.all(
+        semesters.map(async (semester) => {
+            const subjects = await Subject.find({ semester: semester._id });
+
+            await Promise.all(
+                subjects.map(async (subject) => {
+                    await subject.remove();
+                    await Attendance.deleteMany({ subject: subject._id });
+                })
+            );
+
+            await semester.remove();
+        })
+    );
+
+    // deleting student of this batch
+    await User.deleteMany({ batch: batchId });
+
+    // Delete the batch document
+    await batch.remove();
 
     res.status(204).json({
         status: 'success',
