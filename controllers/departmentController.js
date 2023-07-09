@@ -4,6 +4,11 @@ const User = require('./../models/userModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const { sendEmailToDepartment } = require('../utils/email');
+const Batch = require('../models/batchModel');
+const Semester = require('../models/semesterModel');
+const Subject = require('../models/subjectModel');
+const Attendance = require('../models/attendanceModel');
+const DefaultSubject = require('../models/defaultSubjectModel');
 
 exports.getAllDepartments = catchAsync(async (req, res) => {
     const features = new APIFeatures(User.find({ role: 'admin' }), req.query).filter().sort().limit().paginate();
@@ -117,5 +122,60 @@ exports.updateEmail = catchAsync(async (req, res, next) => {
         data: {
             user,
         },
+    });
+});
+
+exports.deleteDepartment = catchAsync(async (req, res) => {
+    const departmentId = req.params.id;
+
+    // Find the department document
+    const department = await User.findById(departmentId);
+
+    if (!department) {
+        // Department not found
+        return next(new AppError('Department not found', 404));
+    }
+
+    // Find all batches with the departmentId as admin
+    const batches = await Batch.find({ admin: departmentId });
+
+    // Delete batches, users, semesters, subjects, and attendances
+    await Promise.all(
+        batches.map(async (batch) => {
+            // deleting student of this batch
+            await User.deleteMany({ batch: batch._id });
+
+            const semesters = await Semester.find({ batch: batch._id });
+
+            await Promise.all(
+                semesters.map(async (semester) => {
+                    const subjects = await Subject.find({ semester: semester._id });
+
+                    await Promise.all(
+                        subjects.map(async (subject) => {
+                            await subject.remove();
+                            await Attendance.deleteMany({ subject: subject._id });
+                        })
+                    );
+
+                    await semester.remove();
+                })
+            );
+
+            await batch.remove();
+        })
+    );
+
+    // adding subjects created by super admin
+    await DefaultSubject.deleteMany({ department: departmentId });
+
+    await User.deleteMany({ department: departmentId });
+
+    // Delete the department document
+    await department.remove();
+
+    res.status(204).json({
+        status: 'success',
+        data: null,
     });
 });

@@ -29,4 +29,6 @@ router.patch('/updateProfile', auth.protect, userController.updateMe);
 
 router.post('/updatePhoto', auth.protect, upload.single('image'), userController.updateImage);
 
+router.post('/completeProfile', auth.protect, auth.restrictTo('admin', 'teacher'), userController.completeSignup);
+
 module.exports = router;

@@ -7,7 +7,10 @@ const auth = require('../controllers/authController');
 
 const router = express.Router();
 
-router.route('/department/:id').get(auth.protect, auth.restrictTo('super-admin'), departmentController.getDepartment);
+router
+    .route('/department/:id')
+    .get(auth.protect, auth.restrictTo('super-admin'), departmentController.getDepartment)
+    .delete(auth.protect, auth.restrictTo('super-admin'), departmentController.deleteDepartment);
 
 router
     .route('/department/:id/updateEmail')

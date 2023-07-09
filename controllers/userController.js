@@ -191,3 +191,23 @@ exports.updateImage = catchAsync(async (req, res, next) => {
         },
     });
 });
+
+exports.completeSignup = catchAsync(async (req, res, next) => {
+    let reqbody = {};
+    const user = await User.findById(req.user.id);
+    if (req.user.role === 'teacher') {
+        user.name = req.body.name;
+        user.gender = req.body.gender;
+        user.approved = true;
+        user.confirmed = true;
+        user.password = req.body.password;
+        user.passwordConfirm = req.body.passwordConfirm;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Profile updated successfully',
+    });
+});
