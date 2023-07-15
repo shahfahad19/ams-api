@@ -18,7 +18,7 @@ exports.addTeacher = catchAsync(async (req, res) => {
         role: 'teacher',
         designation: req.body.designation,
         gender: req.body.gender,
-        departmentId: req.body.departmentId,
+        departmentId: req.user._id,
         password: rndPass,
         passwordConfirm: rndPass,
         confirmed: true,

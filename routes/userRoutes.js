@@ -35,4 +35,6 @@ router.get(
     studentController.getAllStudents
 );
 
+router.get('/students/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.getStudent);
+
 module.exports = router;

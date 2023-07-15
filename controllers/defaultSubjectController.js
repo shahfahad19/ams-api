@@ -1,4 +1,6 @@
 const Subject = require('../models/subjectModel');
+const Semester = require('../models/semesterModel');
+
 const catchAsync = require('../utils/catchAsync');
 const DefaultSubject = require('./../models/defaultSubjectModel');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -33,11 +35,14 @@ exports.getAllDefaultSubjects = catchAsync(async (req, res) => {
         newSubjects = subjects;
     }
 
+    const semester = await Semester.findById(req.query.semester).populate('batch');
+    console.log(semester);
     // SEND RESPONSE
     res.status(200).json({
         status: 'success',
         results: subjects.length,
         data: {
+            semester,
             subjects: newSubjects,
         },
     });
