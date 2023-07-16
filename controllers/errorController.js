@@ -31,6 +31,7 @@ const sendErrorProd = (err, res) => {
         res.status(err.statusCode).json({
             status: err.status,
             message: err.message,
+            error: err,
         });
 
         // Programming or other unknown error: don't leak error details
@@ -39,7 +40,7 @@ const sendErrorProd = (err, res) => {
         res.status(500).json({
             status: 'error',
             message: 'Something went wrong!',
-            error: err.message,
+            error: err,
         });
     }
 };
