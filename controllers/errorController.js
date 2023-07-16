@@ -46,17 +46,16 @@ const sendErrorProd = (err, res) => {
 
 module.exports = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
-    sendErrorDev(err, res);
 
-    //     if (process.env.NODE_ENV === 'development') {
-    //         sendErrorDev(err, res);
-    //     } else if (process.env.NODE_ENV === 'production') {
-    //         let error = { ...err };
+    if (process.env.NODE_ENV === 'development') {
+        sendErrorDev(err, res);
+    } else if (process.env.NODE_ENV === 'production') {
+        let error = { ...err };
 
-    //         if (error.name === 'CastError') error = handleCastErrorDB(err);
-    //         if (error.code === 11000) error = handleDuplicateFieldsDB(err);
-    //         if (error.name === 'ValidationError') error = handleValidationErrorDB(err);
+        if (error.name === 'CastError') error = handleCastErrorDB(err);
+        if (error.code === 11000) error = handleDuplicateFieldsDB(err);
+        if (error.name === 'ValidationError') error = handleValidationErrorDB(err);
 
-    //         sendErrorProd(err, res);
-    //     }
+        sendErrorProd(err, res);
+    }
 };
