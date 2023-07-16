@@ -62,6 +62,9 @@ exports.createBatch = catchAsync(async (req, res, next) => {
 
 exports.getBatch = catchAsync(async (req, res, next) => {
     const batch = await Batch.findById(req.params.id);
+    if (!batch) {
+        return next(new AppError('Batch not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {
