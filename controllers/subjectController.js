@@ -108,7 +108,17 @@ exports.updateSubject = catchAsync(async (req, res) => {
         {
             new: true,
         }
-    ).populate('teacher');
+    )
+        .populate({
+            path: 'teacher',
+            populate: 'departmentId',
+        })
+        .populate({
+            path: 'semester',
+            populate: {
+                path: 'batch',
+            },
+        });
 
     res.status(200).json({
         status: 'success',

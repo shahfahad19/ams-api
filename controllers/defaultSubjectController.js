@@ -17,17 +17,25 @@ exports.getAllDefaultSubjects = catchAsync(async (req, res) => {
     const features = new APIFeatures(DefaultSubject.find(), department).filter().sort().limit().paginate();
     const subjects = await features.query;
 
+    // populating because of breadcrumbs (to get batch name)
+    const semester = await Semester.findById(req.query.semester).populate('batch');
+
     let newSubjects = [];
     if (req.user.role === 'admin') {
-        const semesterSubjects = await Subject.find({ semester: req.query.semester });
-
-        const semesterSubjectNames = [];
-        semesterSubjects.map((semesterSubject) => {
-            semesterSubjectNames.push(semesterSubject.name);
+        // Get all subjects
+        const allSubjects = await Subject.find().populate('semester');
+        // Filter subjects which are added in this batch and save their names in an array
+        const batchSubjectsNames = [];
+        allSubjects.map((subject) => {
+            if (subject.semester.batch.equals(semester.batch._id)) {
+                batchSubjectsNames.push(subject.name);
+            }
         });
 
+        // now remove those subjects which are aleady added in this batch
+        // this way same subject won't be added in multiple semesters of one batch
         subjects.map((subject) => {
-            if (semesterSubjectNames.indexOf(subject.name) === -1) {
+            if (batchSubjectsNames.indexOf(subject.name) === -1) {
                 newSubjects.push(subject);
             }
         });
@@ -35,8 +43,6 @@ exports.getAllDefaultSubjects = catchAsync(async (req, res) => {
         newSubjects = subjects;
     }
 
-    const semester = await Semester.findById(req.query.semester).populate('batch');
-    console.log(semester);
     // SEND RESPONSE
     res.status(200).json({
         status: 'success',
