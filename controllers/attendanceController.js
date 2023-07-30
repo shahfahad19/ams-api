@@ -649,12 +649,12 @@ exports.createAttendance = catchAsync(async (req, res, next) => {
     const currentDate = new Date();
 
     // Calculate the start and end dates of the current day
-    const firstDayOfCurrentWeek = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate() - currentDate.getDay()
-    );
-    const lastDayOfCurrentWeek = new Date(firstDayOfCurrentWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+    // const firstDayOfCurrentWeek = new Date(
+    //     currentDate.getFullYear(),
+    //     currentDate.getMonth(),
+    //     currentDate.getDate() - currentDate.getDay()
+    // );
+    //const lastDayOfCurrentWeek = new Date(firstDayOfCurrentWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
 
     // Find the attendance records for the current date and subject
     const existingAttendancesToday = await Attendance.find({
@@ -666,30 +666,30 @@ exports.createAttendance = catchAsync(async (req, res, next) => {
     });
 
     // Find the attendance records for the current week and subject
-    const existingAttendancesThisWeek = await Attendance.find({
-        date: {
-            $gte: firstDayOfCurrentWeek,
-            $lte: lastDayOfCurrentWeek,
-        },
-        subject: subject,
-    });
+    // const existingAttendancesThisWeek = await Attendance.find({
+    //     date: {
+    //         $gte: firstDayOfCurrentWeek,
+    //         $lte: lastDayOfCurrentWeek,
+    //     },
+    //     subject: subject,
+    // });
 
-    // Get the subject's creditHours
-    const subjectData = await Subject.findById(subject);
+    // // Get the subject's creditHours
+    // const subjectData = await Subject.findById(subject);
 
-    const creditHours = subjectData.creditHours;
+    // const creditHours = subjectData.creditHours;
 
-    // Check if the attendance limits have been reached
-    if (existingAttendancesThisWeek.length >= creditHours) {
-        return next(
-            new AppError(
-                `Attendance limit reached for this week. Only ${creditHours} attendances are allowed for this subject per week.`
-            ),
-            400
-        );
-    }
+    // // Check if the attendance limits have been reached
+    // if (existingAttendancesThisWeek.length >= creditHours) {
+    //     return next(
+    //         new AppError(
+    //             `Attendance limit reached for this week. Only ${creditHours} attendances are allowed for this subject per week.`
+    //         ),
+    //         400
+    //     );
+    // }
 
-    if (existingAttendancesToday.length >= 2) {
+    if (existingAttendancesToday.length >= 3) {
         return next(new AppError(`Attendance limit reached for today..`), 400);
     }
 

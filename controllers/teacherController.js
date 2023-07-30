@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('./../utils/apiFeatures');
 const { sendEmailToTeacher } = require('../utils/email');
 const mongoose = require('mongoose');
+const AppError = require('../utils/appError');
 
 exports.addTeacher = catchAsync(async (req, res) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -138,6 +139,17 @@ exports.getTeachersByDepartments = catchAsync(async (req, res) => {
         results: teachers.length,
         data: {
             teachers,
+        },
+    });
+});
+
+exports.getTeacher = catchAsync(async (req, res) => {
+    const teacher = await User.findById(req.params.id).select('-passwordChangedAt');
+    if (teacher.role !== 'teacher') return next(new AppError('Teacher not found', 404));
+    res.status(200).json({
+        status: 'success',
+        data: {
+            teacher,
         },
     });
 });

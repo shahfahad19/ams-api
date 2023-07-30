@@ -2,6 +2,7 @@ const express = require('express');
 const teacherController = require('./../controllers/teacherController');
 const studentController = require('./../controllers/studentController');
 const departmentController = require('./../controllers/departmentController');
+const userController = require('./../controllers/userController');
 
 const auth = require('../controllers/authController');
 
@@ -36,5 +37,6 @@ router.get(
 );
 
 router.get('/students/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.getStudent);
+router.get('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.getTeacher);
 
 module.exports = router;
