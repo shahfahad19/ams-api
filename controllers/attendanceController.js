@@ -689,9 +689,10 @@ exports.createAttendance = catchAsync(async (req, res, next) => {
     //     );
     // }
 
-    if (existingAttendancesToday.length >= 3) {
-        return next(new AppError(`Attendance limit reached for today..`), 400);
-    }
+    // TODO: Remove this later
+    // if (existingAttendancesToday.length >= 3) {
+    //     return next(new AppError(`Attendance limit reached for today..`), 400);
+    // }
 
     let date = new Date();
     let offset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
