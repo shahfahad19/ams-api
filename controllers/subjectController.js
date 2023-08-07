@@ -148,7 +148,7 @@ exports.deleteSubject = catchAsync(async (req, res, next) => {
     });
 });
 
-// getting teacher subjects
+// getting teacher subjects (to get his/her own subject)
 exports.getTeacherSubjects = catchAsync(async (req, res) => {
     const features = new APIFeatures(Subject.find({ teacher: req.user._id, archived: false }), req.query)
         .filter()
@@ -163,7 +163,6 @@ exports.getTeacherSubjects = catchAsync(async (req, res) => {
             populate: 'admin',
         },
     });
-    console.log(subjects);
 
     const subjectsArr = [];
 
@@ -193,4 +192,47 @@ exports.removeSubjectFromTeacher = catchAsync(async (req, res, next) => {
         teacher: null,
     };
     next();
+});
+
+// for admin and super admin
+exports.getTeachersSubjects = catchAsync(async (req, res) => {
+    const subjects = await Subject.find({ teacher: req.params.id, archived: false }).populate({
+        path: 'semester',
+        populate: {
+            path: 'batch',
+            populate: 'admin',
+        },
+    });
+    let filteredSubjects = subjects;
+
+    // if (req.user.role === 'admin') {
+    //     subjects.forEach((subject) => {
+    //         if (subject.semester.batch.admin.equals(req.user._id)) {
+    //             filteredSubjects.push(subject);
+    //         }
+    //     });
+    // } else {
+    //     filteredSubjects = subjects;
+    // }
+    const subjectsArr = [];
+
+    filteredSubjects.forEach((subject) => {
+        subjectsArr.push({
+            _id: subject._id,
+            name: subject.name,
+            creditHours: subject.creditHours,
+            semesterName: subject.semester.name,
+            batchId: subject.semester.batch._id,
+            batchName: subject.semester.batch.name,
+            department: subject.semester.batch.admin.department,
+        });
+    });
+
+    res.status(200).json({
+        status: 'success',
+        results: filteredSubjects.length,
+        data: {
+            subjects: subjectsArr,
+        },
+    });
 });

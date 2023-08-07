@@ -144,7 +144,7 @@ exports.getTeachersByDepartments = catchAsync(async (req, res) => {
 });
 
 exports.getTeacher = catchAsync(async (req, res) => {
-    const teacher = await User.findById(req.params.id).select('-passwordChangedAt');
+    const teacher = await User.findById(req.params.id).select('-passwordChangedAt').populate('departmentId');
     if (teacher.role !== 'teacher') return next(new AppError('Teacher not found', 404));
     res.status(200).json({
         status: 'success',
