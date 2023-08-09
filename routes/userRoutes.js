@@ -39,4 +39,12 @@ router.get(
 router.get('/students/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.getStudent);
 router.get('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.getTeacher);
 
+router.delete('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.deleteTeacher);
+router.patch(
+    '/teachers/:id',
+    auth.protect,
+    auth.restrictTo('admin', 'super-admin'),
+    teacherController.updateTeacherDesignation
+);
+
 module.exports = router;

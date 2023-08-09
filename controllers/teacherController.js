@@ -4,6 +4,7 @@ const APIFeatures = require('./../utils/apiFeatures');
 const { sendEmailToTeacher } = require('../utils/email');
 const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
+const Subject = require('../models/subjectModel');
 
 exports.addTeacher = catchAsync(async (req, res) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -150,6 +151,55 @@ exports.getTeacher = catchAsync(async (req, res) => {
         status: 'success',
         data: {
             teacher,
+        },
+    });
+});
+
+exports.deleteTeacher = catchAsync(async (req, res, next) => {
+    // getting teacher info
+    const teacher = await User.findById(req.params.id);
+
+    // checking if user is teacher
+    if (teacher.role !== 'teacher') return next(AppError('This user is not a teacher', 400));
+
+    // removing teacher id from all sujects
+    await Subject.updateMany(
+        { teacher: teacher._is },
+        {
+            teacher: null,
+        }
+    );
+
+    // deleting teacher account
+    await User.findByIdAndDelete(teacher._id);
+
+    // sending response
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    });
+});
+
+exports.updateTeacherDesignation = catchAsync(async (req, res, next) => {
+    // getting teacher info
+    const teacher = await User.findById(req.params.id);
+
+    // checking if user is teacher
+    if (teacher.role !== 'teacher') return next(AppError('This user is not a teacher', 400));
+    const updatedTeacher = await User.findByIdAndUpdate(
+        teacher._id,
+        {
+            designation: req.body.designation,
+        },
+        {
+            new: true,
+        }
+    ).populate('departmentId');
+    // sending response
+    res.status(200).json({
+        status: 'success',
+        data: {
+            teacher: updatedTeacher,
         },
     });
 });

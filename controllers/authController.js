@@ -75,7 +75,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     const confirmationToken = user.createConfirmationToken();
 
     //confirmation link
-    let link = `https://amsapp.vercel.app/confirmAccount/?token=${confirmationToken}`;
+    let link = `https://amsapp.vercel.app/confirm-account/?token=${confirmationToken}`;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
 
@@ -90,10 +90,8 @@ exports.signup = catchAsync(async (req, res, next) => {
             email: user.email,
             subject: 'Confirm your account',
             name: user.name,
-            links: {
-                link,
-                deleteLink,
-            },
+            confirmationLink: link,
+            deleteLink: link,
         });
     } catch (err) {}
     await user.save({ validateBeforeSave: false });
@@ -251,7 +249,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     try {
         await sendEmail({
-            email: admin.email,
+            email: user.email,
+            name: user.name,
             subject: 'Your password reset token (valid for 10 min)',
             message,
         });
@@ -261,9 +260,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
             message: 'Token sent to email!',
         });
     } catch (err) {
-        admin.passwordResetToken = undefined;
-        admin.passwordResetExpires = undefined;
-        await admin.save({ validateBeforeSave: false });
+        console.log(err);
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save({ validateBeforeSave: false });
 
         return next(new AppError('There was an error sending the email. Try again later!'), 500);
     }

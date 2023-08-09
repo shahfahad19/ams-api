@@ -67,18 +67,18 @@ exports.getCode = catchAsync(async (req, res, next) => {
 exports.confirmAccount = catchAsync(async (req, res, next) => {
     // 1) Get admin based on the token
     const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-    const admin = await User.findOne({
+    const user = await User.findOne({
         confirmationToken: hashedToken,
     });
 
     // 2) If token has not expired, confirm account
-    if (!admin) {
+    if (!user) {
         return next(new AppError('Token is invalid or account is already confirmed', 400));
     }
 
-    admin.confirmationToken = undefined;
-    admin.confirmed = true;
-    await admin.save({ validateBeforeSave: false });
+    user.confirmationToken = undefined;
+    user.confirmed = true;
+    await user.save({ validateBeforeSave: false });
     res.status(200).json({
         status: 'success',
         message: 'Account has been confirmed!',

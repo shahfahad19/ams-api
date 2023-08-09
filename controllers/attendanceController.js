@@ -461,14 +461,6 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                 as: 'subject',
             },
         },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'subject.teacher',
-                foreignField: '_id',
-                as: 'teacher',
-            },
-        },
 
         {
             $lookup: {
@@ -491,18 +483,14 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
             },
         },
         {
-            $unwind: '$teacher',
-        },
-        {
             $unwind: '$semester',
         },
+
         {
             $project: {
                 subject: '$_id',
                 subjectName: '$subject.name',
-                teacher: '$teacher._id',
-                teacherName: '$teacher.name',
-                teacherEmail: req.user.role === 'student' ? null : '$teacher.email',
+                teacher: '$subject.teacher',
                 semester: '$semester._id',
                 totalClass: {
                     $size: '$attendancesList',

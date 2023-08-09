@@ -58,7 +58,7 @@ exports.deleteStudent = catchAsync(async (req, res) => {
 });
 
 exports.getStudent = catchAsync(async (req, res) => {
-    const student = await User.findById(req.params.id);
+    const student = await User.findById(req.params.id).populate('batch');
     res.status(200).json({
         status: 'success',
         data: {
