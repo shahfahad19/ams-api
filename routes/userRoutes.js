@@ -36,7 +36,12 @@ router.get(
     studentController.getAllStudents
 );
 
-router.get('/students/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.getStudent);
+router
+    .route('/students/:id')
+    .get(auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.getStudent)
+    .patch(auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.updateStudent)
+    .delete(auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.deleteStudent);
+
 router.get('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.getTeacher);
 
 router.delete('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.deleteTeacher);

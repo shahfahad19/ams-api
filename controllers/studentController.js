@@ -4,6 +4,7 @@ const APIFeatures = require('./../utils/apiFeatures');
 const crypto = require('crypto');
 const { getStudentAttendance } = require('./attendanceController');
 const User = require('../models/userModel');
+const AppError = require('../utils/appError');
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
@@ -36,11 +37,23 @@ exports.getAllStudents = catchAsync(async (req, res) => {
     });
 });
 
-exports.updateStudent = catchAsync(async (req, res) => {
-    const filteredObj = filterObj(req.body, 'rollNo', 'name');
+exports.updateStudent = catchAsync(async (req, res, next) => {
+    const studentInfo = await User.findById(req.params.id);
+
+    const filteredObj = filterObj(req.body, 'rollNo', 'name', 'registrationNo');
+    const existingStudent = await User.findOne({ role: 'student', batch: studentInfo.batch, rollNo: req.body.rollNo });
+
+    if (existingStudent) {
+        const currentStudentId = studentInfo._id;
+        const existingStudentId = existingStudent._id;
+        if (!currentStudentId.equals(existingStudentId)) {
+            return next(new AppError('A student with this roll no already exists in this batch'));
+        }
+    }
+
     const student = await User.findByIdAndUpdate(req.params.id, filteredObj, {
         new: true,
-    });
+    }).populate('batch');
     res.status(200).json({
         status: 'success',
         data: {
