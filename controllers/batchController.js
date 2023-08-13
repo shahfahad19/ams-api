@@ -61,7 +61,7 @@ exports.createBatch = catchAsync(async (req, res, next) => {
 });
 
 exports.getBatch = catchAsync(async (req, res, next) => {
-    const batch = await Batch.findById(req.params.id);
+    const batch = await Batch.findById(req.params.id).populate('admin');
     if (!batch) {
         return next(new AppError('Batch not found', 404));
     }

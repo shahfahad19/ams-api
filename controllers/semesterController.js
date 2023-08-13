@@ -41,7 +41,10 @@ exports.getAllSemesters = catchAsync(async (req, res) => {
 });
 
 exports.getSemester = catchAsync(async (req, res) => {
-    const semester = await Semester.findById(req.params.id).populate('batch');
+    const semester = await Semester.findById(req.params.id).populate({
+        path: 'batch',
+        populate: 'admin',
+    });
 
     res.status(200).json({
         status: 'success',

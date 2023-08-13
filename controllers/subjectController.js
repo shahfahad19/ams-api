@@ -57,6 +57,7 @@ exports.getSubject = catchAsync(async (req, res) => {
             path: 'semester',
             populate: {
                 path: 'batch',
+                populate: 'admin',
             },
         })
         .select('-__v');

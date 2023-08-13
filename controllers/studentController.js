@@ -21,7 +21,7 @@ exports.getAllStudents = catchAsync(async (req, res) => {
             error: 'Batch Id should be provided',
         });
     }
-    const features = new APIFeatures(User.find({ batch: req.query.batch }), req.query)
+    const features = new APIFeatures(User.find({ batch: req.query.batch, confirmed: true }), req.query)
         .filter()
         .sort()
         .limit()
