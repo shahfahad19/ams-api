@@ -52,7 +52,14 @@ exports.addTeacher = catchAsync(async (req, res) => {
 });
 
 exports.getAllTeachers = catchAsync(async (req, res) => {
-    const features = new APIFeatures(User.find({ role: 'teacher' }), req.query).filter().sort().limit().paginate();
+    const data =
+        req.user.role === 'super-admin'
+            ? {
+                  role: 'teacher',
+                  departmentId: req.query.dept,
+              }
+            : { role: 'teacher' };
+    const features = new APIFeatures(User.find(data), req.query).filter().sort().limit().paginate();
     const teachers = await features.query;
     // SEND RESPONSE
     res.status(200).json({

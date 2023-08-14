@@ -50,7 +50,17 @@ router.patch(
 router
     .route('/:id')
     .get(auth.protect, subjectController.getSubject)
-    .patch(auth.protect, auth.restrictTo('admin'), auth.checkSubjectPermission, subjectController.updateSubject)
-    .delete(auth.protect, auth.restrictTo('admin'), auth.checkSubjectPermission, subjectController.deleteSubject);
+    .patch(
+        auth.protect,
+        auth.restrictTo('admin', 'super-admin'),
+        auth.checkSubjectPermission,
+        subjectController.updateSubject
+    )
+    .delete(
+        auth.protect,
+        auth.restrictTo('admin', 'super-admin'),
+        auth.checkSubjectPermission,
+        subjectController.deleteSubject
+    );
 
 module.exports = router;

@@ -43,11 +43,22 @@ exports.updateStudent = catchAsync(async (req, res, next) => {
     const filteredObj = filterObj(req.body, 'rollNo', 'name', 'registrationNo');
     const existingStudent = await User.findOne({ role: 'student', batch: studentInfo.batch, rollNo: req.body.rollNo });
 
+    // check if student with updated roll no exists
     if (existingStudent) {
+        // get current student and existing student ids
         const currentStudentId = studentInfo._id;
         const existingStudentId = existingStudent._id;
+
+        // if they don't match it means they are different students
         if (!currentStudentId.equals(existingStudentId)) {
-            return next(new AppError('A student with this roll no already exists in this batch'));
+            // check if existing student has his account confirmed or not
+            if (existingStudent.confirmed)
+                return next(new AppError('A student with this roll no already exists in this batch'));
+            // if not confirmed, set his roll no to zero
+            else {
+                existingStudent.rollNo = -1;
+                await existingStudent.save({ validateBeforeSave: false });
+            }
         }
     }
 

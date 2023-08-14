@@ -42,7 +42,12 @@ router
     .patch(auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.updateStudent)
     .delete(auth.protect, auth.restrictTo('admin', 'super-admin'), studentController.deleteStudent);
 
-router.get('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.getTeacher);
+router.get(
+    '/teachers/:id',
+    auth.protect,
+    auth.restrictTo('admin', 'super-admin', 'student'),
+    teacherController.getTeacher
+);
 
 router.delete('/teachers/:id', auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.deleteTeacher);
 router.patch(

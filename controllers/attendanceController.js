@@ -143,150 +143,79 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
                 name: '$name',
                 dates: '$dates',
                 percentage: {
-                    $concat: [
-                        {
-                            $convert: {
-                                input: {
-                                    $multiply: [
+                    $cond: {
+                        if: {
+                            $eq: [
+                                {
+                                    $subtract: [
+                                        attendanceCount.length,
                                         {
-                                            $divide: [
-                                                {
-                                                    $size: {
-                                                        $filter: {
-                                                            input: '$attendance',
-                                                            cond: {
-                                                                $eq: ['$$this.status', 'present'],
-                                                            },
-                                                        },
+                                            $size: {
+                                                $filter: {
+                                                    input: '$attendance',
+                                                    cond: {
+                                                        $eq: ['$$this.status', 'leave'],
                                                     },
                                                 },
+                                            },
+                                        },
+                                    ],
+                                },
+                                0,
+                            ],
+                        },
+                        then: 'N/A', // Handle the division by zero scenario
+                        else: {
+                            $concat: [
+                                {
+                                    $convert: {
+                                        input: {
+                                            $multiply: [
                                                 {
-                                                    $subtract: [
-                                                        attendanceCount.length,
+                                                    $divide: [
                                                         {
                                                             $size: {
                                                                 $filter: {
                                                                     input: '$attendance',
                                                                     cond: {
-                                                                        $eq: ['$$this.status', 'leave'],
+                                                                        $eq: ['$$this.status', 'present'],
                                                                     },
                                                                 },
                                                             },
                                                         },
+                                                        {
+                                                            $subtract: [
+                                                                attendanceCount.length,
+                                                                {
+                                                                    $size: {
+                                                                        $filter: {
+                                                                            input: '$attendance',
+                                                                            cond: {
+                                                                                $eq: ['$$this.status', 'leave'],
+                                                                            },
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
                                                     ],
                                                 },
+                                                100,
                                             ],
                                         },
-                                        100,
-                                    ],
+                                        to: 'string',
+                                    },
                                 },
-                                to: 'string',
-                            },
+                                '%',
+                            ],
                         },
-                        '%',
-                    ],
+                    },
                 },
+
                 attendance: '$attendance',
             },
         },
     ]);
-
-    // const attendances = await Attendance.aggregate([
-    //     {
-    //         $match: {
-    //             subject: subject,
-    //         },
-    //     },
-    //     {
-    //         $sort: {
-    //             date: 1,
-    //         },
-    //     },
-    //     {
-    //         $unwind: '$attendances',
-    //     },
-    //     {
-    //         $lookup: {
-    //             from: 'users',
-    //             localField: 'attendances.student',
-    //             foreignField: '_id',
-    //             as: 'student',
-    //         },
-    //     },
-    //     {
-    //         $group: {
-    //             _id: '$student._id',
-    //             name: { $first: '$student.name' },
-    //             rollNo: { $first: '$student.rollNo' },
-    //             dates: { $push: '$date' },
-    //             attendance: { $push: '$attendances' },
-    //             presentCount: {
-    //                 $sum: {
-    //                     $cond: { if: { $eq: ['$attendances.status', 'present'] }, then: 1, else: 0 },
-    //                 },
-    //             },
-    //             absentCount: {
-    //                 $sum: {
-    //                     $cond: { if: { $eq: ['$attendances.status', 'absent'] }, then: 1, else: 0 },
-    //                 },
-    //             },
-    //             leaveCount: {
-    //                 $sum: {
-    //                     $cond: { if: { $eq: ['$attendances.status', 'leave'] }, then: 1, else: 0 },
-    //                 },
-    //             },
-    //         },
-    //     },
-    //     {
-    //         $unwind: '$_id',
-    //     },
-    //     {
-    //         $unwind: '$name',
-    //     },
-    //     {
-    //         $unwind: '$rollNo',
-    //     },
-    //     {
-    //         $sort: {
-    //             rollNo: 1,
-    //         },
-    //     },
-    //     {
-    //         $unset: 'attendance.student',
-    //     },
-    //     {
-    //         $unset: 'attendance._id',
-    //     },
-    //     {
-    //         $project: {
-    //             rollNo: '$rollNo',
-    //             name: '$name',
-    //             dates: '$dates',
-    //             presentCount: '$presentCount',
-    //             absentCount: '$absentCount',
-    //             leaveCount: '$leaveCount',
-    //             percentage: {
-    //                 $concat: [
-    //                     {
-    //                         $convert: {
-    //                             input: {
-    //                                 $multiply: [
-    //                                     {
-    //                                         $divide: ['$presentCount', { $size: '$attendance' }],
-    //                                     },
-    //                                     100,
-    //                                 ],
-    //                             },
-    //                             to: 'string',
-    //                         },
-    //                     },
-    //                     '%',
-    //                 ],
-    //             },
-    //             attendance: '$attendance',
-    //         },
-    //     },
-    // ]);
 
     res.status(200).json({
         status: 'success',
@@ -298,132 +227,6 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
         },
     });
 });
-
-// exports.getSubjectAttendance = catchAsync(async (req, res) => {
-//     //const features = new APIFeatures(Attendance.find(), req.query).filter().sort().limit().paginate();
-//     const subject = mongoose.Types.ObjectId(req.params.subject);
-//     const attendances = await Attendance.aggregate([
-//         {
-//             $match: {
-//                 subject: subject,
-//             },
-//         },
-//         {
-//             $sort: {
-//                 date: 1,
-//             },
-//         },
-//         {
-//             $unwind: '$attendances',
-//         },
-//         {
-//             $lookup: {
-//                 from: 'users',
-//                 localField: 'attendances.student',
-//                 foreignField: '_id',
-//                 as: 'student',
-//             },
-//         },
-//         {
-//             $group: {
-//                 _id: '$student._id',
-//                 name: { $first: '$student.name' },
-//                 rollNo: { $first: '$student.rollNo' },
-//                 dates: { $push: '$date' },
-//                 attendance: { $push: '$attendances' },
-//             },
-//         },
-//         {
-//             $unwind: '$_id',
-//         },
-//         {
-//             $unwind: '$name',
-//         },
-//         {
-//             $unwind: '$rollNo',
-//         },
-//         {
-//             $sort: {
-//                 rollNo: 1,
-//             },
-//         },
-//         {
-//             $unset: 'attendance.student',
-//         },
-//         {
-//             $unset: 'attendance._id',
-//         },
-//         {
-//             $project: {
-//                 rollNo: '$rollNo',
-//                 name: '$name',
-//                 dates: '$dates',
-//                 percentage: {
-//                     $concat: [
-//                         {
-//                             $convert: {
-//                                 input: {
-//                                     $multiply: [
-//                                         {
-//                                             $divide: [
-//                                                 {
-//                                                     $size: {
-//                                                         $filter: {
-//                                                             input: '$attendance',
-//                                                             cond: {
-//                                                                 $eq: ['$$this.status', 'present'],
-//                                                             },
-//                                                         },
-//                                                     },
-//                                                 },
-//                                                 {
-//                                                     $size: '$attendance',
-//                                                 },
-//                                             ],
-//                                         },
-//                                         100,
-//                                     ],
-//                                 },
-//                                 to: 'string',
-//                             },
-//                         },
-//                         '%',
-//                     ],
-//                 },
-//                 attendance: '$attendance',
-//             },
-//         },
-//     ]);
-
-//     // let refactoredAttendanceArray = [];
-//     // attendances.forEach((attendance, index) => {
-//     //     let sepAtt = [];
-//     //     attendance.attendances.forEach((sepatt, index) => {
-//     //         sepAtt[index] = {
-//     //             student: sepatt.student._id,
-//     //             rollNo: sepatt.student.rollNo,
-//     //             name: sepatt.student.name,
-//     //             status: sepatt.status,
-//     //         };
-//     //     });
-//     //     refactoredAttendanceArray[index] = {
-//     //         _id: attendance._id,
-//     //         date: attendance.date,
-//     //         subject: attendance.subject,
-//     //         attendance: sepAtt,
-//     //     };
-//     // });
-//     // SEND RESPONSE
-//     res.status(200).json({
-//         status: 'success',
-//         results: attendances.length,
-//         data: {
-//             attendances,
-//         },
-//     });
-// });
-
-// Get Student Attendance
 
 exports.getStudentAttendance = catchAsync(async (req, res) => {
     const student = mongoose.Types.ObjectId(req.params.id);
@@ -526,44 +329,75 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
                     },
                 },
                 percentage: {
-                    $convert: {
-                        input: {
-                            $multiply: [
+                    $cond: {
+                        if: {
+                            $eq: [
                                 {
-                                    $divide: [
+                                    $subtract: [
+                                        { $size: '$attendancesList' }, // Total count
                                         {
                                             $size: {
                                                 $filter: {
                                                     input: '$attendances',
                                                     cond: {
-                                                        $eq: ['$$this.status', 'present'],
+                                                        $eq: ['$$this.status', 'leave'],
                                                     },
                                                 },
                                             },
                                         },
-                                        {
-                                            $subtract: [
-                                                { $size: '$attendancesList' },
-                                                {
-                                                    $size: {
-                                                        $filter: {
-                                                            input: '$attendances',
-                                                            cond: {
-                                                                $eq: ['$$this.status', 'leave'],
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                            ],
-                                        },
                                     ],
                                 },
-                                100,
+                                0,
                             ],
                         },
-                        to: 'string',
+                        then: 'N/A', // Handle the division by zero scenario
+                        else: {
+                            $concat: [
+                                {
+                                    $convert: {
+                                        input: {
+                                            $multiply: [
+                                                {
+                                                    $divide: [
+                                                        {
+                                                            $size: {
+                                                                $filter: {
+                                                                    input: '$attendances',
+                                                                    cond: {
+                                                                        $eq: ['$$this.status', 'present'],
+                                                                    },
+                                                                },
+                                                            },
+                                                        },
+                                                        {
+                                                            $subtract: [
+                                                                { $size: '$attendancesList' },
+                                                                {
+                                                                    $size: {
+                                                                        $filter: {
+                                                                            input: '$attendances',
+                                                                            cond: {
+                                                                                $eq: ['$$this.status', 'leave'],
+                                                                            },
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                        to: 'string',
+                                    },
+                                },
+                                '%',
+                            ],
+                        },
                     },
                 },
+
                 attendances: '$attendances',
                 dates: '$dates',
             },
@@ -623,6 +457,189 @@ exports.getStudentAttendance = catchAsync(async (req, res) => {
             $unset: 'studentData.confirmationToken',
         },
     ]);
+    res.send({
+        status: 'success',
+        results: stdatt.length,
+        attendances: stdatt,
+    });
+});
+
+exports.getStudentAttendanceForSubject = catchAsync(async (req, res) => {
+    const student = mongoose.Types.ObjectId(req.params.id);
+    const subjectId = mongoose.Types.ObjectId(req.params.subjectId);
+
+    const stdatt = await Attendance.aggregate([
+        {
+            $match: {
+                'attendances.student': student,
+                subject: subjectId, // Match specific subject
+            },
+        },
+        {
+            $unwind: '$attendances',
+        },
+        {
+            $match: {
+                'attendances.student': student,
+            },
+        },
+        {
+            $group: {
+                _id: '$subject',
+
+                attendances: {
+                    $push: '$attendances',
+                },
+                dates: {
+                    $push: '$date',
+                },
+            },
+        },
+        {
+            $lookup: {
+                from: 'subjects',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'subject',
+            },
+        },
+
+        {
+            $unwind: '$subject',
+        },
+        {
+            $lookup: {
+                from: 'attendances',
+                localField: 'subject._id',
+                foreignField: 'subject',
+                as: 'attendancesList',
+            },
+        },
+
+        {
+            $project: {
+                subject: '$_id',
+                subjectName: '$subject.name',
+                teacher: '$subject.teacher',
+                semester: '$semester._id',
+                totalClasses: {
+                    $size: '$attendancesList',
+                },
+                present: {
+                    $size: {
+                        $filter: {
+                            input: '$attendances',
+                            cond: {
+                                $eq: ['$$this.status', 'present'],
+                            },
+                        },
+                    },
+                },
+                absent: {
+                    $size: {
+                        $filter: {
+                            input: '$attendances',
+                            cond: {
+                                $eq: ['$$this.status', 'absent'],
+                            },
+                        },
+                    },
+                },
+                leave: {
+                    $size: {
+                        $filter: {
+                            input: '$attendances',
+                            cond: {
+                                $eq: ['$$this.status', 'leave'],
+                            },
+                        },
+                    },
+                },
+                percentage: {
+                    $cond: {
+                        if: {
+                            $eq: [
+                                {
+                                    $subtract: [
+                                        { $size: '$attendancesList' }, // Total count
+                                        {
+                                            $size: {
+                                                $filter: {
+                                                    input: '$attendances',
+                                                    cond: {
+                                                        $eq: ['$$this.status', 'leave'],
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                                0,
+                            ],
+                        },
+                        then: 'N/A', // Handle the division by zero scenario
+                        else: {
+                            $concat: [
+                                {
+                                    $convert: {
+                                        input: {
+                                            $multiply: [
+                                                {
+                                                    $divide: [
+                                                        {
+                                                            $size: {
+                                                                $filter: {
+                                                                    input: '$attendances',
+                                                                    cond: {
+                                                                        $eq: ['$$this.status', 'present'],
+                                                                    },
+                                                                },
+                                                            },
+                                                        },
+                                                        {
+                                                            $subtract: [
+                                                                { $size: '$attendancesList' },
+                                                                {
+                                                                    $size: {
+                                                                        $filter: {
+                                                                            input: '$attendances',
+                                                                            cond: {
+                                                                                $eq: ['$$this.status', 'leave'],
+                                                                            },
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                        to: 'string',
+                                    },
+                                },
+                                '%',
+                            ],
+                        },
+                    },
+                },
+
+                attendances: '$attendances',
+                dates: '$dates',
+            },
+        },
+        {
+            $unset: '_id',
+        },
+        {
+            $unset: 'attendances.student',
+        },
+        {
+            $unset: 'attendances._id',
+        },
+    ]);
+
     res.send({
         status: 'success',
         results: stdatt.length,

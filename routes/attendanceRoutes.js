@@ -23,11 +23,8 @@ router
     );
 
 // Getting attendance of a student
-router.get(
-    '/student/:id',
+router.get('/student/:id', auth.protect, attendanceController.getStudentAttendance);
 
-    auth.protect,
-    attendanceController.getStudentAttendance
-);
+router.get('/student/:id/subject/:subjectId', auth.protect, attendanceController.getStudentAttendanceForSubject);
 
 module.exports = router;
