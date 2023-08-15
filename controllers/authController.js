@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const { sendEmail } = require('../utils/email');
+const { sendEmail, sendConfirmationEmail } = require('../utils/email');
 const Batch = require('../models/batchModel');
 const Semester = require('../models/semesterModel');
 const Subject = require('../models/subjectModel');
@@ -86,9 +86,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 
     // SENDING EMAIL
     try {
-        await sendEmail({
+        await sendConfirmationEmail({
             email: user.email,
-            subject: 'Confirm your account',
             name: user.name,
             confirmationLink: link,
             deleteLink: link,

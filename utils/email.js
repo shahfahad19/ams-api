@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-exports.sendEmail = async (options) => {
+exports.sendConfirmationEmail = async (options) => {
     // 1) Create a transporter
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
@@ -25,19 +25,64 @@ exports.sendEmail = async (options) => {
         html: `
       ${htmlHead}
       <p class="text-content">
-      ${greetings}
+      ${greetings} ${options.name}
       <br/>
       Thanks for creating account at AMS.
-      <br/>
-      Your account is inactive and it won't appear in attendance until you confirm it.
       <br/>
       Confirm your account now by clicking the following link
       <br/>
       <a href="${options.confirmationLink}">${options.confirmationLink}</a>
       <br/><br/>
+      Note: Account confirmation is required for attendance marking
+      <br/><br/>
+
       If you didn't create this account click <a href="${options.deleteLink}" style="color: red;">here</a> to delete it.
      
       <p class="footer">This email was sent to you beacuse an account with your email was created in attendance management system</p>  
+      ${htmlEnd}
+  `,
+    };
+
+    // 3) Actually send the email
+    await transporter.sendMail(mailOptions);
+};
+
+exports.resendConfirmationEmail = async (options) => {
+    // 1) Create a transporter
+    const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        secure: process.env.NODE_ENV === 'production',
+        auth: {
+            user: process.env.EMAIL_USERNAME,
+            pass: process.env.EMAIL_PASSWORD,
+        },
+    });
+
+    // 2) Define the email options
+    const mailOptions = {
+        from: 'Attendance Managment System',
+        to: options.email,
+        subject: 'Confirm your account',
+        text: `Hello,
+        Please confirm your account by opening this link:
+        ${options.confirmationLink}
+        `,
+        html: `
+      ${htmlHead}
+      <p class="text-content">
+      ${greetings} ${options.name}
+      
+      <br/>
+      Confirm your account now by clicking the following link
+      <br/>
+      <a href="${options.confirmationLink}">${options.confirmationLink}</a>
+      <br/><br/>
+      Note: Account confirmation is required for attendance marking
+      <br/><br/>
+
+      
+      <p class="footer">This email was sent to you a confirmation email was requested from your account</p>  
       ${htmlEnd}
   `,
     };

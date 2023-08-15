@@ -2,7 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('./../models/userModel');
 const AppError = require('../utils/appError');
 const validator = require('validator');
-const sendEmail = require('./../utils/email');
+const { resendConfirmationEmail } = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
 
@@ -17,50 +17,32 @@ exports.getUser = catchAsync(async (req, res, next) => {
 });
 
 exports.getConfirmationToken = catchAsync(async (req, res, next) => {
-    const admin = await User.findById(req.user._id);
-    if (admin.confirmed === true) return next(new AppError('Account already confirmed', 409));
-    const token = admin.createConfirmationToken();
-    let link = process.env.HOME_URL + '/admin/confirmAccount/' + token;
+    const user = await User.findById(req.user._id);
+    if (user.confirmed === true) return next(new AppError('Account already confirmed', 409));
+
+    const token = user.createConfirmationToken();
+    // Confirmation link
+    let link = `https://amsapp.vercel.app/confirm-account/?token=${token}`;
     const shortenLink = await shortLink(link);
     if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
-    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${link}`;
+
+    // SENDING EMAIL
     try {
-        await admin.save({ validateBeforeSave: false });
-        await sendEmail({
-            email: admin.email,
-            subject: 'Confirm your account',
-            message,
+        await resendConfirmationEmail({
+            email: user.email,
+            name: user.name,
+            confirmationLink: link,
         });
+        console.log('email sent');
+
+        await user.save({ validateBeforeSave: false });
 
         res.status(200).json({
             status: 'success',
             message: 'Confirmation link sent to email!',
         });
     } catch (err) {
-        console.log(err);
-        return next(new AppError('There was an error sending the email. Try again later!'), 500);
-    }
-});
-
-exports.getCode = catchAsync(async (req, res, next) => {
-    const admin = await User.findById(req.body.email);
-    if (admin) return next(new AppError('An account with this email already exists', 400));
-    const confirmationCode = crypto.randomBytes(2).toString('hex').toUpperCase();
-    let message = `<h1>Confirm your account</h1>Here is your confirmation link ${confirmationCode}`;
-    try {
-        await admin.save({ validateBeforeSave: false });
-        await sendEmail({
-            email: admin.email,
-            subject: 'Confirm your account',
-            message,
-        });
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Confirmation link sent to email!',
-        });
-    } catch (err) {
-        return next(new AppError('There was an error sending the email. Try again later!'), 500);
+        return next(new AppError('An error occured while sending the email.', 500));
     }
 });
 
