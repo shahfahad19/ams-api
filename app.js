@@ -2,8 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-
+const nodemailer = require('nodemailer');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const authRouter = require('./routes/authRoutes');

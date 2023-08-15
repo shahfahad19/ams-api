@@ -1,19 +1,21 @@
 const nodemailer = require('nodemailer');
 
-exports.sendConfirmationEmail = async (options) => {
-    // 1) Create a transporter
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
+const transporterOptions = () => {
+    return {
+        service: 'gmail',
         auth: {
             user: process.env.EMAIL_USERNAME,
             pass: process.env.EMAIL_PASSWORD,
         },
-    });
+    };
+};
+exports.sendConfirmationEmail = async (options) => {
+    // 1) Create a transporter
+    const transporter = nodemailer.createTransport(transporterOptions());
 
     // 2) Define the email options
     const mailOptions = {
-        from: 'Attendance Managment System',
+        from: 'attendancesystemuos@gmail.com',
         to: options.email,
         subject: 'Welcome to attendance management system',
         text: `Welcome to attendance management system!
@@ -49,19 +51,11 @@ exports.sendConfirmationEmail = async (options) => {
 
 exports.resendConfirmationEmail = async (options) => {
     // 1) Create a transporter
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        secure: process.env.NODE_ENV === 'production',
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD,
-        },
-    });
+    const transporter = nodemailer.createTransport(transporterOptions());
 
     // 2) Define the email options
     const mailOptions = {
-        from: 'Attendance Managment System',
+        from: 'attendancesystemuos@gmail.com',
         to: options.email,
         subject: 'Confirm your account',
         text: `Hello,
@@ -93,18 +87,11 @@ exports.resendConfirmationEmail = async (options) => {
 
 exports.sendEmailToDepartment = async (options) => {
     // 1) Create a transporter
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD,
-        },
-    });
+    const transporter = nodemailer.createTransport(transporterOptions());
 
     // 2) Define the email options
     const mailOptions = {
-        from: 'Attendance Managment System',
+        from: 'attendancesystemuos@gmail.com',
         to: options.email,
         subject: 'You have been added as a Department Admin in AMS',
         text: `You have been added by AMS administrator to manage ${options.department} department.
@@ -136,18 +123,11 @@ exports.sendEmailToDepartment = async (options) => {
 
 exports.sendEmailToTeacher = async (options) => {
     // 1) Create a transporter
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD,
-        },
-    });
+    const transporter = nodemailer.createTransport(transporterOptions());
 
     // 2) Define the email options
     const mailOptions = {
-        from: 'Attendance Managment System',
+        from: 'attendancesystemuos@gmail.com',
         to: options.email,
         subject: 'You have been added as a Teacher in AMS',
         text: `You have been added by Department of ${options.department} as a teacher.
