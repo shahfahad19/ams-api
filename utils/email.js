@@ -226,7 +226,7 @@ const greetings = '<span class="bold">Assalam-u-alikum!</span>';
 
 const emailPassword = (options) => {
     return `<p class="text-content">
-        <span>Email: </span><code><Recipent email></code>
+        <span>Email: ${options.email}
         <br/>
         <span>Password: </span><code>${options.password}</code></p>`;
 };
