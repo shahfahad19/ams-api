@@ -10,7 +10,7 @@ router.get('/', auth.protect, userController.getUser);
 router.post('/signup', auth.verifyCaptcha, auth.signup);
 router.post('/login', auth.verifyCaptcha, auth.login);
 router.post('/forgotPassword', auth.verifyCaptcha, auth.forgotPassword);
-router.patch('/checkResetToken/:token', auth.checkResetPasswordLink);
+router.get('/checkResetToken/:token', auth.checkResetPasswordLink);
 router.patch('/resetPassword/:token', auth.resetPassword);
 router.get(
     '/getConfirmationToken',
