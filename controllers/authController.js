@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const { sendEmail, sendConfirmationEmail } = require('../utils/email');
+const { sendEmail, sendConfirmationEmail, sendResetPasswordEmail } = require('../utils/email');
 const Batch = require('../models/batchModel');
 const Semester = require('../models/semesterModel');
 const Subject = require('../models/subjectModel');
@@ -242,16 +242,15 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     // 3) Send it to admin's email
-    const resetURL = `https://amsapp.vercel.app/resetPassword/${resetToken}`;
-
-    const message = `<h1>Forgot your password?</h1>Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+    let resetURL = `https://amsapp.vercel.app/reset-password/${resetToken}`;
+    const shortenLink = await shortLink(resetURL);
+    if (shortenLink.data.shortLink) resetURL = shortenLink.data.shortLink;
 
     try {
-        await sendEmail({
+        await sendResetPasswordEmail({
             email: user.email,
             name: user.name,
-            subject: 'Your password reset token (valid for 10 min)',
-            message,
+            resetLink: resetURL,
         });
 
         res.status(200).json({

@@ -27,7 +27,7 @@ exports.sendConfirmationEmail = async (options) => {
         html: `
       ${htmlHead}
       <p class="text-content">
-      ${greetings} ${options.name}
+      ${greetings} <span class="bold">${options.name}</span>m
       <br/>
       Thanks for creating account at AMS.
       <br/>
@@ -77,6 +77,40 @@ exports.resendConfirmationEmail = async (options) => {
 
       
       <p class="footer">This email was sent to you a confirmation email was requested from your account</p>  
+      ${htmlEnd}
+  `,
+    };
+
+    // 3) Actually send the email
+    await transporter.sendMail(mailOptions);
+};
+
+exports.sendResetPasswordEmail = async (options) => {
+    // 1) Create a transporter
+    const transporter = nodemailer.createTransport(transporterOptions());
+
+    // 2) Define the email options
+    const mailOptions = {
+        from: 'attendancesystemuos@gmail.com',
+        to: options.email,
+        subject: 'Reset Password',
+        text: `Hello,
+        You can reset your password using this link:
+        ${options.resetLink}
+        `,
+        html: `
+      ${htmlHead}
+      <p class="text-content">
+      ${greetings} ${options.name}
+      
+      <br/>
+      You can reset your password using this link
+      <br/>
+      <a href="${options.resetLink}">${options.resetLink}</a>
+      <br/><br/>
+
+      
+      <p class="footer">This email was sent to you a reset password link was requested with your email</p>  
       ${htmlEnd}
   `,
     };
@@ -180,12 +214,14 @@ const htmlHead = `<html>
                 margin: 10px;
             	color: #0072F5;
                 text-align: center;
+                font-size: 20px;
                 margin: 10px 0px 0px 0px;
                 
             }
             
             .secondary-heading {
                 margin: 10px;
+                font-size: 18px;
             	color: #0072F5;
                 text-align: center;
             }
@@ -193,7 +229,8 @@ const htmlHead = `<html>
             .text-content {
             	color: #1C1C1C;
                 padding: 2px 5px;
-                font-size: 14px;
+                font-size: 16px;
+                padding: 5px 0px;
             }
             
             .footer {
@@ -206,6 +243,7 @@ const htmlHead = `<html>
             .link {
             	text-decoration: none;
                 color: #0072F5;
+                font-size: 16px;
             }
             .bold {
             	font-weight: 500;

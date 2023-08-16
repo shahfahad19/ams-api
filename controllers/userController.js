@@ -8,6 +8,9 @@ const crypto = require('crypto');
 
 exports.getUser = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user._id);
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {
@@ -175,11 +178,16 @@ exports.updateImage = catchAsync(async (req, res, next) => {
 });
 
 exports.completeSignup = catchAsync(async (req, res, next) => {
-    let reqbody = {};
     const user = await User.findById(req.user.id);
     if (req.user.role === 'teacher') {
         user.name = req.body.name;
         user.gender = req.body.gender;
+        user.approved = true;
+        user.confirmed = true;
+        user.password = req.body.password;
+        user.passwordConfirm = req.body.passwordConfirm;
+    } else if (req.user.role === 'admin') {
+        user.name = req.body.name;
         user.approved = true;
         user.confirmed = true;
         user.password = req.body.password;

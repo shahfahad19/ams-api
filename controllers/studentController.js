@@ -73,7 +73,7 @@ exports.updateStudent = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.deleteStudent = catchAsync(async (req, res) => {
+exports.deleteStudent = catchAsync(async (req, res, next) => {
     await User.findByIdAndDelete(req.params.id);
     res.status(204).json({
         status: 'success',
@@ -83,6 +83,9 @@ exports.deleteStudent = catchAsync(async (req, res) => {
 
 exports.getStudent = catchAsync(async (req, res) => {
     const student = await User.findById(req.params.id).populate('batch');
+    if (!student) {
+        return next(new AppError('Student not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {

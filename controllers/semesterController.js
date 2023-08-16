@@ -1,5 +1,6 @@
 const Attendance = require('../models/attendanceModel');
 const Subject = require('../models/subjectModel');
+const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Semester = require('./../models/semesterModel');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -40,12 +41,14 @@ exports.getAllSemesters = catchAsync(async (req, res) => {
     });
 });
 
-exports.getSemester = catchAsync(async (req, res) => {
+exports.getSemester = catchAsync(async (req, res, next) => {
     const semester = await Semester.findById(req.params.id).populate({
         path: 'batch',
         populate: 'admin',
     });
-
+    if (!semester) {
+        return next(new AppError('Semester not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {

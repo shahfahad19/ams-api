@@ -66,8 +66,11 @@ exports.createDepartment = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.getDepartment = catchAsync(async (req, res) => {
+exports.getDepartment = catchAsync(async (req, res, next) => {
     const department = await User.findById(req.params.id);
+    if (!department) {
+        return next(new AppError('Department not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {

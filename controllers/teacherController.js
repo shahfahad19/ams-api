@@ -35,7 +35,6 @@ exports.addTeacher = catchAsync(async (req, res) => {
         await sendEmailToTeacher({
             name: req.body.name,
             email: req.body.email,
-            subject: 'Approve your account at AMS',
             department: req.body.department,
             password: rndPass,
         });
@@ -151,9 +150,13 @@ exports.getTeachersByDepartments = catchAsync(async (req, res) => {
     });
 });
 
-exports.getTeacher = catchAsync(async (req, res) => {
+exports.getTeacher = catchAsync(async (req, res, next) => {
     const teacher = await User.findById(req.params.id).select('-passwordChangedAt').populate('departmentId');
+    if (!teacher) {
+        return next(new AppError('Teacher not found', 404));
+    }
     if (teacher.role !== 'teacher') return next(new AppError('Teacher not found', 404));
+
     res.status(200).json({
         status: 'success',
         data: {

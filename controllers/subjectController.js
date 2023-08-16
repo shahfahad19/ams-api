@@ -47,7 +47,7 @@ exports.getAllSubjects = catchAsync(async (req, res) => {
     });
 });
 
-exports.getSubject = catchAsync(async (req, res) => {
+exports.getSubject = catchAsync(async (req, res, next) => {
     const subject = await Subject.findById(req.params.id)
         .populate({
             path: 'teacher',
@@ -61,7 +61,9 @@ exports.getSubject = catchAsync(async (req, res) => {
             },
         })
         .select('-__v');
-
+    if (!subject) {
+        return next(new AppError('Subject not found', 404));
+    }
     res.status(200).json({
         status: 'success',
         data: {
