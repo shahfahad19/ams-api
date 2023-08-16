@@ -242,7 +242,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     // 3) Send it to admin's email
-    let resetURL = `https://amsapp.vercel.app/reset-password/${resetToken}`;
+    let resetURL = `https://amsapp.vercel.app/reset-password?token=${resetToken}`;
     const shortenLink = await shortLink(resetURL);
     if (shortenLink.data.shortLink) resetURL = shortenLink.data.shortLink;
 
@@ -255,7 +255,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
         res.status(200).json({
             status: 'success',
-            message: 'Token sent to email!',
+            message: 'Link sent to email!',
         });
     } catch (err) {
         console.log(err);
@@ -265,6 +265,26 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
         return next(new AppError('There was an error sending the email. Try again later!'), 500);
     }
+});
+
+exports.checkResetPasswordLink = catchAsync(async (req, res, next) => {
+    // 1) Get userbased on the token
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+    });
+
+    // 2) If token has not expired, and there is user, set the new password
+    if (!user) {
+        return next(new AppError('Token is invalid or has expired', 400));
+    }
+
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
