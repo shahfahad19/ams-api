@@ -17,7 +17,7 @@ router
     .get(auth.protect, auth.checkAttendancePermission, attendanceController.getAttendance)
     .delete(
         auth.protect,
-        auth.restrictTo('admin'),
+        auth.restrictTo('admin', 'super-admin'),
         auth.checkAttendancePermission,
         attendanceController.deleteAttendance
     );

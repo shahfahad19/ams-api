@@ -186,6 +186,8 @@ exports.checkSemesterPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+
     const subjectId = req.params.id || req.query.subject;
     const subject = await Subject.findById(subjectId).populate({
         path: 'semester',
@@ -198,6 +200,8 @@ exports.checkSubjectPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkSubjectTeacher = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+
     const subjectId = req.body.subject || req.params.id;
 
     const subject = await Subject.findById(subjectId);
@@ -208,6 +212,8 @@ exports.checkSubjectTeacher = catchAsync(async (req, res, next) => {
 });
 
 exports.checkStudentPermission = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+
     const studentId = req.params.id || req.query.student;
     const student = await User.findOne({ role: 'student', _id: studentId }).populate({
         path: 'batch',
@@ -218,6 +224,8 @@ exports.checkStudentPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkAttendancePermission = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+
     const attendanceId = req.params.id || req.query.attendance;
     const attenance = await Attendance.findById(attendanceId).populate({
         path: 'subject',

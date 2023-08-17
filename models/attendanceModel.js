@@ -11,11 +11,16 @@ const attendanceSchema = new mongoose.Schema(
             ref: 'Subject',
             required: true,
         },
+        marked_by: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
         attendances: [
             {
                 student: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: 'Student',
+                    ref: 'User',
                     required: true,
                 },
                 status: {

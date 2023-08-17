@@ -19,7 +19,14 @@ exports.getAttendance = catchAsync(async (req, res) => {
             path: 'subject',
             populate: {
                 path: 'semester',
+                populate: {
+                    path: 'batch',
+                    populate: 'admin',
+                },
             },
+        })
+        .populate({
+            path: 'marked_by',
         })
         .populate({
             path: 'attendances',
@@ -27,30 +34,11 @@ exports.getAttendance = catchAsync(async (req, res) => {
                 path: 'student',
             },
         });
-    let sepAtt = [];
-    attendance.attendances.forEach((sepatt, index) => {
-        sepAtt[index] = {
-            student: sepatt.student._id,
-            rollNo: sepatt.student.rollNo,
-            name: sepatt.student.name,
-            status: sepatt.status,
-        };
-    });
-    const refactoredAttendanceArray = {
-        _id: attendance._id,
-        date: attendance.date,
-        subject: attendance.subject._id,
-        subjectName: attendance.subject.name,
-        teacher: attendance.subject.teacher._id,
-        teacherName: attendance.subject.teacher.name,
-        semester: attendance.subject.semester._id,
-        semester: attendance.subject.semester.name,
-        attendance: sepAtt,
-    };
+
     res.status(200).json({
         status: 'success',
         data: {
-            attendance: attendance,
+            attendance,
         },
     });
 });
@@ -713,6 +701,7 @@ exports.createAttendance = catchAsync(async (req, res, next) => {
         date: formattedDate,
         subject: subject,
         attendances: req.body.attendance,
+        marked_by: req.user.id,
     };
     const newAttendance = await Attendance.create(attendance);
 
