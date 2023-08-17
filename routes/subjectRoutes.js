@@ -24,7 +24,12 @@ router
 router
     .route('/')
     .get(auth.protect, subjectController.getAllSubjects)
-    .post(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, subjectController.createSubject);
+    .post(
+        auth.protect,
+        auth.restrictTo('admin', 'super-admin'),
+        auth.checkSemesterPermission,
+        subjectController.createSubject
+    );
 
 // for admin and super admin to get teacher subject list
 router

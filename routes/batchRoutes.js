@@ -8,7 +8,7 @@ const router = express.Router();
 router
     .route('/')
     .get(auth.protect, batchController.getAllBatches)
-    .post(auth.protect, auth.restrictTo('admin'), batchController.createBatch);
+    .post(auth.protect, auth.restrictTo('admin', 'super-admin'), batchController.createBatch);
 
 router
     .route('/:id')

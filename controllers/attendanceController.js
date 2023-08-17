@@ -79,11 +79,13 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
     const subject = mongoose.Types.ObjectId(req.query.subject);
 
     const dates = [];
+    const ids = [];
     const features = new APIFeatures(Attendance.find(), { subject }).filter().sort('date').limit().paginate();
     const attendanceCount = await features.query;
 
     attendanceCount.map((attendance, index) => {
         dates[index] = attendance.date;
+        ids[index] = attendance._id;
     });
 
     const attendances = await Attendance.aggregate([
@@ -222,7 +224,8 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
         results: attendances.length,
         data: {
             count: attendanceCount.length,
-            dates: dates,
+            ids,
+            dates,
             attendances,
         },
     });

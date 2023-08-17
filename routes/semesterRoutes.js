@@ -9,7 +9,12 @@ const router = express.Router();
 router
     .route('/')
     .get(auth.protect, semesterController.getAllSemesters)
-    .post(auth.protect, auth.restrictTo('admin'), auth.checkBatchPermission, semesterController.createSemester);
+    .post(
+        auth.protect,
+        auth.restrictTo('admin', 'super-admin'),
+        auth.checkBatchPermission,
+        semesterController.createSemester
+    );
 
 // Semester Crud functions
 router

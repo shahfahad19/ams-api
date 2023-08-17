@@ -18,7 +18,7 @@ exports.getAllDefaultSubjects = catchAsync(async (req, res) => {
     const subjects = await features.query;
 
     // populating because of breadcrumbs (to get batch name)
-    const semester = await Semester.findById(req.query.semester).populate('batch');
+    const semester = await Semester.findById(req.query.semester).populate({ path: 'batch', populate: 'admin' });
 
     let newSubjects = [];
     if (req.user.role === 'admin') {

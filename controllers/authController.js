@@ -167,6 +167,7 @@ exports.ignoreConfirmation = catchAsync(async (req, res, next) => {
 });
 
 exports.checkBatchPermission = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
     const batchId = req.params.id || req.query.batch;
     const batch = await Batch.findById(batchId);
     if (!batch) return next(new AppError('Batch Not Found', 404));
@@ -175,6 +176,8 @@ exports.checkBatchPermission = catchAsync(async (req, res, next) => {
 });
 
 exports.checkSemesterPermission = catchAsync(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+
     const semesterId = req.params.id || req.query.semester;
     const semester = await Semester.findById(semesterId).populate('batch');
     if (!semester) return next(new AppError('Semester Not Found', 404));

@@ -44,7 +44,7 @@ exports.getAllBatches = catchAsync(async (req, res) => {
 });
 
 exports.createBatch = catchAsync(async (req, res, next) => {
-    const admin = req.user._id;
+    const admin = req.user.role === 'admin' ? req.user._id : req.query.department;
     const batch = {
         admin,
         name: req.body.name,
