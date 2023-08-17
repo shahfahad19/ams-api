@@ -108,6 +108,9 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     if (req.body.department) {
         updatedUser.department = req.body.department;
     }
+    if (req.body.photo) {
+        updatedUser.photo = req.body.photo;
+    }
     await updatedUser.save({ validateBeforeSave: false });
 
     res.status(200).json({
