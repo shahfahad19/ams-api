@@ -5,6 +5,7 @@ const validator = require('validator');
 const { resendConfirmationEmail } = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
+const APIFeatures = require('./../utils/apiFeatures');
 
 exports.getUser = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user._id);
@@ -202,5 +203,72 @@ exports.completeSignup = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         message: 'Profile updated successfully',
+    });
+});
+
+// exports.search = catchAsync(async (req, res, next) => {
+//     const searchData = {
+//         role: req.body.role,
+//         req.body.query: req.body.search_by,
+//         query: req.body.query,
+//     };
+
+//     if (searchData.role !== 'student' && searchData.role !== 'teacher') return next(new AppError('No results', 400));
+//     if (searchData.search_by !== 'rollNo' && searchData.role !== 'name' && searchData.role !== 'email')
+//         return next(new AppError('No results', 400));
+
+//     let users;
+//     if (req.user.role === 'admin') {
+//         if (searchData.role === 'student') {
+//             users = await User.find(searchData).populate({
+//                 path: 'batch',
+//                 populate: {
+//                     path: 'department',
+//                     match: { _id: desiredDepartmentId }, // Filtering by the desired department ID
+//                 },
+//             });
+//         }
+//     }
+// });
+
+exports.getUsers = catchAsync(async (req, res, next) => {
+    const features = new APIFeatures(User.find(), req.query).filter().sort().limit().paginate();
+    const users = await features.query
+        .populate({
+            path: 'batch',
+            populate: 'admin',
+        })
+        .populate('departmentId');
+
+    if (req.user.role === 'admin') {
+        let filteredUsers = [];
+
+        if (req.query.role === 'student') {
+            filteredUsers = users.filter((student) => student.batch.admin._id.equals(req.user._id));
+            if (filteredUsers.length === 0) return next(new AppError('No students found', 404));
+        } else if (req.query.role === 'teacher') {
+            filteredUsers = users.filter((teacher) => teacher.departmentId._id.equals(req.user._id));
+            if (filteredUsers.length === 0) return next(new AppError('No teachers found', 404));
+        }
+
+        // SEND RESPONSE
+        return res.status(200).json({
+            status: 'success',
+            results: filteredUsers.length,
+            data: {
+                users: filteredUsers,
+            },
+        });
+    }
+
+    if (users.length === 0) return next(new AppError('No users found', 404));
+
+    // SEND RESPONSE
+    res.status(200).json({
+        status: 'success',
+        results: users.length,
+        data: {
+            users,
+        },
     });
 });

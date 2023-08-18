@@ -82,7 +82,10 @@ exports.deleteStudent = catchAsync(async (req, res, next) => {
 });
 
 exports.getStudent = catchAsync(async (req, res) => {
-    const student = await User.findById(req.params.id).populate('batch');
+    const student = await User.findById(req.params.id).populate({
+        path: 'batch',
+        populate: 'admin',
+    });
     if (!student) {
         return next(new AppError('Student not found', 404));
     }

@@ -8,6 +8,8 @@ const auth = require('../controllers/authController');
 
 const router = express.Router();
 
+router.get('/search', auth.protect, auth.restrictTo('super-admin', 'admin'), userController.getUsers);
+
 router
     .route('/department/:id')
     .get(auth.protect, auth.restrictTo('super-admin'), departmentController.getDepartment)

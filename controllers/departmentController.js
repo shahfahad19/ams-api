@@ -172,7 +172,8 @@ exports.deleteDepartment = catchAsync(async (req, res) => {
     // adding subjects created by super admin
     await DefaultSubject.deleteMany({ department: departmentId });
 
-    await User.deleteMany({ department: departmentId });
+    // delete teachers
+    await User.deleteMany({ departmentId: departmentId });
 
     // Delete the department document
     await department.remove();
