@@ -76,7 +76,44 @@ exports.resendConfirmationEmail = async (options) => {
       <br/><br/>
 
       
-      <p class="footer">This email was sent to you a confirmation email was requested from your account</p>  
+      <p class="footer">This email was sent to you beacuse a confirmation email was requested from your account</p>  
+      ${htmlEnd}
+  `,
+    };
+
+    // 3) Actually send the email
+    await transporter.sendMail(mailOptions);
+};
+
+exports.sendTokenToNewEmail = async (options) => {
+    // 1) Create a transporter
+    const transporter = nodemailer.createTransport(transporterOptions());
+
+    // 2) Define the email options
+    const mailOptions = {
+        from: 'attendancesystemuos@gmail.com',
+        to: options.email,
+        subject: 'Confirm your email',
+        text: `Hello,
+        You just added a new email to your account.
+        Please confirm your email by opening this link:
+        ${options.confirmationLink}
+        `,
+        html: `
+      ${htmlHead}
+      <p class="text-content">
+      ${greetings} ${options.name}
+      
+      <br/>
+      Confirm your email now by clicking the following link
+      <br/>
+      <a href="${options.confirmationLink}">${options.confirmationLink}</a>
+      <br/><br/>
+      If you did not perform this action, ignore this email.
+      <br/><br/>
+
+      
+      <p class="footer">This email was sent to you because this email was added to an account on AMS</p>  
       ${htmlEnd}
   `,
     };

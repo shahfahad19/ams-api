@@ -2,7 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('./../models/userModel');
 const AppError = require('../utils/appError');
 const validator = require('validator');
-const { resendConfirmationEmail } = require('./../utils/email');
+const { resendConfirmationEmail, sendTokenToNewEmail } = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -101,8 +101,20 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     if (req.body.email) {
         if (!validator.isEmail(req.body.email)) return next(new AppError('Email is invalid'), 400);
 
-        updatedUser.email = req.body.email;
+        const token = updatedUser.createNewEmailToken();
+        // Confirmation link
+        let link = `https://amsapp.vercel.app/confirm-email/?token=${token}`;
+        const shortenLink = await shortLink(link);
+        if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
+
+        // SENDING EMAIL
+        await sendTokenToNewEmail({
+            email: updatedUser.email,
+            name: updatedUser.name,
+            confirmationLink: link,
+        });
     }
+
     if (req.body.name) {
         updatedUser.name = req.body.name;
     }

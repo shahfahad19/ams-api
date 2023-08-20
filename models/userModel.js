@@ -121,6 +121,16 @@ const userSchema = new mongoose.Schema({
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    newEmail: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        validate: [validator.isEmail, 'Please provide a valid email'],
+    },
+    newEmailToken: {
+        type: String,
+        select: false,
+    },
     confirmed: {
         type: Boolean,
         default: false,
@@ -179,7 +189,6 @@ userSchema.methods.correctPassword = async function (candidatePassword, userPass
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
     if (this.passwordChangedAt) {
         const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
-
         return JWTTimestamp < changedTimestamp;
     }
 
@@ -203,6 +212,14 @@ userSchema.methods.createConfirmationToken = function () {
     this.confirmationToken = crypto.createHash('sha256').update(confirmationToken).digest('hex');
 
     return confirmationToken;
+};
+
+userSchema.methods.createNewEmailToken = function () {
+    const newEmailToken = crypto.randomBytes(32).toString('hex');
+
+    this.newEmailToken = crypto.createHash('sha256').update(newEmailToken).digest('hex');
+
+    return newEmailToken;
 };
 
 const User = mongoose.model('User', userSchema);
