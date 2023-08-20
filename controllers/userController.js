@@ -2,7 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('./../models/userModel');
 const AppError = require('../utils/appError');
 const validator = require('validator');
-const { resendConfirmationEmail, sendTokenToNewEmail } = require('./../utils/email');
+const { resendConfirmationEmail, sendTokenToNewEmail, sendTokenToOldEmail } = require('./../utils/email');
 const shortLink = require('./../utils/link');
 const crypto = require('crypto');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -107,11 +107,25 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         const shortenLink = await shortLink(link);
         if (shortenLink.data.shortLink) link = shortenLink.data.shortLink;
 
+        // removal link
+        let removalLink = `https://amsapp.vercel.app/remove-email/?token=${token}`;
+        const shortenRemovalLink = await shortLink(removalLink);
+        if (shortenRemovalLink.data.shortLink) link = shortenRemovalLink.data.shortLink;
+
+        updatedUser.newEmail = req.body.email;
+
         // SENDING EMAIL
         await sendTokenToNewEmail({
-            email: updatedUser.email,
+            email: req.body.email,
             name: updatedUser.name,
             confirmationLink: link,
+        });
+
+        await sendTokenToOldEmail({
+            email: updatedUser.email,
+            name: updatedUser.name,
+            removalLink: removalLink,
+            userID: updatedUser._id,
         });
     }
 

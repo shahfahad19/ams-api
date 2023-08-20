@@ -122,6 +122,47 @@ exports.sendTokenToNewEmail = async (options) => {
     await transporter.sendMail(mailOptions);
 };
 
+exports.sendTokenToOldEmail = async (options) => {
+    // 1) Create a transporter
+    const transporter = nodemailer.createTransport(transporterOptions());
+
+    // 2) Define the email options
+    const mailOptions = {
+        from: 'attendancesystemuos@gmail.com',
+        to: options.email,
+        subject: 'Confirm your email',
+        text: `Hello,
+        A new email has been added to your account. We have sent a confirmation link to your other email.
+        
+        If this wasn't to you, open this link to remove it from your account.
+        ${options.removalLink}
+        For security reasons, change your password as well.
+        `,
+        html: `
+      ${htmlHead}
+      <p class="text-content">
+      ${greetings} ${options.name}
+      
+      <br/>
+      A new email was just added to your account. A confirmation email has been sent to the new email.
+      <br/>
+      If this action wasn't performed by you, click the following link to remove the email from your profile.
+      <a href="${options.removalLink}">${options.removalLink}</a>
+      <br/><br/>
+        Change your password as well to secure your account.
+      <br/><br/>
+      In case you lost your account, contact administrator and provide this id: ${options.userID}
+
+      
+      <p class="footer">This email was sent to you because a new email was added to your account on AMS</p>  
+      ${htmlEnd}
+  `,
+    };
+
+    // 3) Actually send the email
+    await transporter.sendMail(mailOptions);
+};
+
 exports.sendResetPasswordEmail = async (options) => {
     // 1) Create a transporter
     const transporter = nodemailer.createTransport(transporterOptions());
