@@ -102,7 +102,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         if (!validator.isEmail(req.body.email)) return next(new AppError('Email is invalid'), 400);
 
         const existingUserWithEmail = await User.findOne({ email: req.body.email });
-        if (!existingUserWithEmail) return next(new AppError('Email is already in use'), 400);
+        if (existingUserWithEmail) return next(new AppError('Email is already in use'), 400);
 
         const token = updatedUser.createNewEmailToken();
         // Confirmation link
@@ -325,23 +325,36 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.removeEmail = catchAsync(async (req, res, next) => {
-    // 1) Get admin based on the token
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-    const user = await User.findOne({
-        newEmailToken: hashedToken,
-    });
+    if (req.params.token === 'fromProfile') {
+        const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+        const user = await User.findById(req.user._id);
 
-    // 2) If token has not expired, confirm account
-    if (!user) {
-        return next(new AppError('Token is invalid', 400));
+        user.newEmailToken = undefined;
+        user.newEmail = undefined;
+
+        await user.save({ validateBeforeSave: false });
+        res.status(200).json({
+            status: 'success',
+            message: 'Email has been removed!',
+        });
+    } else {
+        const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+        const user = await User.findOne({
+            newEmailToken: hashedToken,
+        });
+
+        // 2) If token has not expired, confirm account
+        if (!user) {
+            return next(new AppError('Token is invalid', 400));
+        }
+
+        user.newEmailToken = undefined;
+        user.newEmail = undefined;
+
+        await user.save({ validateBeforeSave: false });
+        res.status(200).json({
+            status: 'success',
+            message: 'Email has been removed!',
+        });
     }
-
-    user.newEmailToken = undefined;
-    user.newEmail = undefined;
-
-    await user.save({ validateBeforeSave: false });
-    res.status(200).json({
-        status: 'success',
-        message: 'Email has been removed!',
-    });
 });
