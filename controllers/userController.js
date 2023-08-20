@@ -302,15 +302,19 @@ exports.getUsers = catchAsync(async (req, res, next) => {
 });
 
 exports.confirmEmail = catchAsync(async (req, res, next) => {
-    // 1) Get admin based on the token
+    // 1) Get user based on the token
     const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
     const user = await User.findOne({
         newEmailToken: hashedToken,
     });
 
-    // 2) If token has not expired, confirm account
+    // 2) If token has not expired,
     if (!user) {
         return next(new AppError('Token is invalid', 400));
+    }
+
+    if (!user._id(req.user._id)) {
+        return next(new AppError('Login from your account and reopen the link', 400));
     }
 
     user.newEmailToken = undefined;
@@ -346,6 +350,10 @@ exports.removeEmail = catchAsync(async (req, res, next) => {
         // 2) If token has not expired, confirm account
         if (!user) {
             return next(new AppError('Token is invalid', 400));
+        }
+
+        if (!user._id(req.user._id)) {
+            return next(new AppError('Login from your account and reopen the link', 400));
         }
 
         user.newEmailToken = undefined;
