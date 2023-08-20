@@ -147,6 +147,7 @@ exports.sendTokenToOldEmail = async (options) => {
       A new email was just added to your account. A confirmation email has been sent to the new email.
       <br/>
       If this action wasn't performed by you, click the following link to remove the email from your profile.
+    <br/>
       <a href="${options.removalLink}">${options.removalLink}</a>
       <br/><br/>
         Change your password as well to secure your account.

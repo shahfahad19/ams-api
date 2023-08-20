@@ -101,6 +101,9 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     if (req.body.email) {
         if (!validator.isEmail(req.body.email)) return next(new AppError('Email is invalid'), 400);
 
+        const existingUserWithEmail = await User.findOne({ email: req.body.email });
+        if (!existingUserWithEmail) return next(new AppError('Email is already in use'), 400);
+
         const token = updatedUser.createNewEmailToken();
         // Confirmation link
         let link = `https://amsapp.vercel.app/confirm-email/?token=${token}`;
@@ -110,7 +113,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         // removal link
         let removalLink = `https://amsapp.vercel.app/remove-email/?token=${token}`;
         const shortenRemovalLink = await shortLink(removalLink);
-        if (shortenRemovalLink.data.shortLink) link = shortenRemovalLink.data.shortLink;
+        if (shortenRemovalLink.data.shortLink) removalLink = shortenRemovalLink.data.shortLink;
 
         updatedUser.newEmail = req.body.email;
 
@@ -190,7 +193,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 // });
 
 exports.updateImage = catchAsync(async (req, res, next) => {
-    console.log(req.file);
     if (!req.file) return next(new AppError('Image not found', 400));
     const user = await User.findById(req.user._id);
     if (!user.confirmed) return next(new AppError('Please confirm your account first!', 403));
@@ -296,5 +298,50 @@ exports.getUsers = catchAsync(async (req, res, next) => {
         data: {
             users,
         },
+    });
+});
+
+exports.confirmEmail = catchAsync(async (req, res, next) => {
+    // 1) Get admin based on the token
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({
+        newEmailToken: hashedToken,
+    });
+
+    // 2) If token has not expired, confirm account
+    if (!user) {
+        return next(new AppError('Token is invalid', 400));
+    }
+
+    user.newEmailToken = undefined;
+    user.email = user.newEmail;
+    user.newEmail = undefined;
+
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({
+        status: 'success',
+        message: 'Email has been confirmed!',
+    });
+});
+
+exports.removeEmail = catchAsync(async (req, res, next) => {
+    // 1) Get admin based on the token
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({
+        newEmailToken: hashedToken,
+    });
+
+    // 2) If token has not expired, confirm account
+    if (!user) {
+        return next(new AppError('Token is invalid', 400));
+    }
+
+    user.newEmailToken = undefined;
+    user.newEmail = undefined;
+
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({
+        status: 'success',
+        message: 'Email has been removed!',
     });
 });
