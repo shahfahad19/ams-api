@@ -32,7 +32,7 @@ router.post('/updatePhoto', auth.protect, upload.single('image'), userController
 
 router.post('/completeProfile', auth.protect, auth.restrictTo('admin', 'teacher'), userController.completeSignup);
 
-router.post('/confirmEmail/:token', auth.protect, userController.completeSignup);
-router.post('/removeEmail/:token', auth.protect, userController.completeSignup);
+router.get('/confirmEmail/:token', auth.protect, userController.completeSignup);
+router.get('/removeEmail/:token', auth.protect, userController.completeSignup);
 
 module.exports = router;

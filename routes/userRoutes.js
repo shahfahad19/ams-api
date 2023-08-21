@@ -27,7 +27,7 @@ router
 router
     .route('/teachers')
     .get(auth.protect, teacherController.getDepartmentTeachers)
-    .post(auth.protect, auth.restrictTo('admin'), teacherController.addTeacher);
+    .post(auth.protect, auth.restrictTo('admin', 'super-admin'), teacherController.addTeacher);
 
 router.get('/teachersByDepartments', teacherController.getTeachersByDepartments);
 

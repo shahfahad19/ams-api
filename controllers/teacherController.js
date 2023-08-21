@@ -14,12 +14,13 @@ exports.addTeacher = catchAsync(async (req, res) => {
         const randomIndex = Math.floor(Math.random() * characters.length);
         rndPass += characters.charAt(randomIndex);
     }
+
     const userData = {
-        name: req.body.name,
+        name: req.body.name ? req.body.name : 'Not Set Yet',
         email: req.body.email,
         role: 'teacher',
         designation: req.body.designation,
-        gender: req.body.gender,
+        gender: req.body.gender ? req.body.gender : undefined,
         departmentId: req.user._id,
         password: rndPass,
         passwordConfirm: rndPass,
