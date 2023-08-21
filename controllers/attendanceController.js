@@ -68,8 +68,17 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
 
     const dates = [];
     const ids = [];
+
     const features = new APIFeatures(Attendance.find(), { subject }).filter().sort('date').limit().paginate();
-    const attendanceCount = await features.query;
+    const attendanceCount = await features.query.populate({
+        path: 'subject',
+        populate: {
+            path: 'semester',
+            populate: {
+                path: 'batch',
+            },
+        },
+    });
 
     attendanceCount.map((attendance, index) => {
         dates[index] = attendance.date;
@@ -215,6 +224,7 @@ exports.getSubjectAttendance = catchAsync(async (req, res) => {
             ids,
             dates,
             attendances,
+            subject: attendanceCount[0].subject,
         },
     });
 });
