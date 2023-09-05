@@ -20,7 +20,17 @@ router
 router
     .route('/:id')
     .get(auth.protect, semesterController.getSemester)
-    .patch(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, semesterController.updateSemester)
-    .delete(auth.protect, auth.restrictTo('admin'), auth.checkSemesterPermission, semesterController.deleteSemester);
+    .patch(
+        auth.protect,
+        auth.restrictTo('super-admin', 'admin'),
+        auth.checkSemesterPermission,
+        semesterController.updateSemester
+    )
+    .delete(
+        auth.protect,
+        auth.restrictTo('super-admin', 'admin'),
+        auth.checkSemesterPermission,
+        semesterController.deleteSemester
+    );
 
 module.exports = router;

@@ -13,20 +13,30 @@ router
 router
     .route('/:id')
     .get(auth.protect, batchController.getBatch)
-    .patch(auth.protect, auth.restrictTo('admin'), auth.checkBatchPermission, batchController.updateBatch)
-    .delete(auth.protect, auth.restrictTo('admin'), auth.checkBatchPermission, batchController.deleteBatch);
+    .patch(
+        auth.protect,
+        auth.restrictTo('super-admin', 'admin'),
+        auth.checkBatchPermission,
+        batchController.updateBatch
+    )
+    .delete(
+        auth.protect,
+        auth.restrictTo('super-admin', 'admin'),
+        auth.checkBatchPermission,
+        batchController.deleteBatch
+    );
 
 router.get(
     '/:id/updatecode',
     auth.protect,
-    auth.restrictTo('admin'),
+    auth.restrictTo('super-admin', 'admin'),
     auth.checkBatchPermission,
     batchController.updateBatchCode
 );
 
 router.get(
     '/:id/students',
-    auth.restrictTo('admin'),
+    auth.restrictTo('super-admin', 'admin'),
     auth.protect,
     auth.checkBatchPermission,
     studentController.getAllStudents

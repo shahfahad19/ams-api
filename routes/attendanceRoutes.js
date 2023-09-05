@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Getting attendance of a subject
 // Create option is only for teacher
-// Delete option is only for admin
+
 router
     .route('/')
     .get(auth.protect, auth.checkSubjectPermission, attendanceController.getSubjectAttendance)
