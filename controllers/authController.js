@@ -115,12 +115,26 @@ exports.login = catchAsync(async (req, res, next) => {
     createSendToken(user, 200, res);
 });
 
+exports.logout = catchAsync(async (req, res, next) => {
+    const cookieOptions = {
+        expires: new Date(1000),
+        httpOnly: true,
+    };
+    if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+    res.cookie('jwt', '', cookieOptions);
+
+    res.status(204).json({
+        status: 'success',
+    });
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
     // 1) Getting token and check of it's there
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.jwt) {
+        console.log(req.cookies);
         token = req.cookies.jwt;
     }
 
